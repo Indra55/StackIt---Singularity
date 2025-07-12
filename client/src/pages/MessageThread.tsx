@@ -137,7 +137,7 @@ const MessageThread = () => {
               ) : (
                 <>
                   {messages.map((message, index) => {
-                    const isOwn = message.senderId === user?.id;
+                    const isOwn = String(message.senderId) === String(user?.id);
                     const showAvatar = !isOwn && (
                       index === 0 || 
                       messages[index - 1].senderId !== message.senderId ||

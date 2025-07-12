@@ -1,5 +1,7 @@
 
 import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
+import { io, Socket } from 'socket.io-client';
+import { useAuth } from './AuthContext';
 
 interface SocketEvents {
   'notification:new': (data: any) => void;
@@ -30,49 +32,83 @@ export const useSocket = () => {
 };
 
 export const SocketProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
+  const [socket, setSocket] = useState<Socket | null>(null);
   const [isConnected, setIsConnected] = useState(false);
-  const [eventHandlers] = useState<Map<string, Function[]>>(new Map());
+  const { user, isAuthenticated } = useAuth();
 
   useEffect(() => {
-    // Mock WebSocket connection
-    console.log('🚀 Initializing socket connection for user: admin');
-    
-    const connectSocket = () => {
-      setTimeout(() => {
-        setIsConnected(true);
-        console.log('🔌 Mock WebSocket connected');
-      }, 1000);
-    };
+    if (!isAuthenticated || !user) {
+      if (socket) {
+        socket.disconnect();
+        setSocket(null);
+        setIsConnected(false);
+      }
+      return;
+    }
 
-    connectSocket();
+    // Get JWT token from storage
+    const storedUser = localStorage.getItem('stackit_user') || sessionStorage.getItem('stackit_user');
+    let token = '';
+    if (storedUser) {
+      try {
+        const userData = JSON.parse(storedUser);
+        token = userData.token;
+      } catch (error) {
+        console.error('[Socket] Error parsing stored user data:', error);
+      }
+    }
+
+    if (!token) {
+      console.warn('[Socket] No JWT token found, cannot connect');
+      return;
+    }
+
+    // Create socket connection with authentication
+    const newSocket = io(import.meta.env.VITE_API_URL || 'http://localhost:3100', {
+      auth: { token },
+      transports: ['websocket', 'polling']
+    });
+
+    newSocket.on('connect', () => {
+      setIsConnected(true);
+    });
+
+    newSocket.onAny((event, ...args) => {
+      // Optionally log all events
+    });
+
+    newSocket.on('disconnect', () => {
+      setIsConnected(false);
+    });
+
+    newSocket.on('connect_error', (error) => {
+      setIsConnected(false);
+    });
+
+    setSocket(newSocket);
 
     return () => {
+      newSocket.disconnect();
+      setSocket(null);
       setIsConnected(false);
-      eventHandlers.clear();
     };
-  }, [eventHandlers]);
+  }, [isAuthenticated, user]);
 
   const emit = (event: string, data: any) => {
-    console.log(`📤 Emitting: ${event}`, data);
+    if (socket && isConnected) {
+      socket.emit(event, data);
+    }
   };
 
   const on = <K extends keyof SocketEvents>(event: K, callback: SocketEvents[K]) => {
-    const eventName = event as string;
-    if (!eventHandlers.has(eventName)) {
-      eventHandlers.set(eventName, []);
+    if (socket) {
+      socket.on(event as string, callback);
     }
-    eventHandlers.get(eventName)?.push(callback);
-    console.log(`👂 Socket listening to: ${eventName}`);
   };
 
   const off = <K extends keyof SocketEvents>(event: K, callback: SocketEvents[K]) => {
-    const eventName = event as string;
-    const handlers = eventHandlers.get(eventName);
-    if (handlers) {
-      const index = handlers.indexOf(callback);
-      if (index > -1) {
-        handlers.splice(index, 1);
-      }
+    if (socket) {
+      socket.off(event as string, callback);
     }
   };
 

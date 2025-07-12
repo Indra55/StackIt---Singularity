@@ -2,7 +2,8 @@
 import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
 import { useSocket } from './SocketContext';
 import { useAuth } from './AuthContext';
-import { Notification, NotificationType } from '@/types/notifications';
+import { Notification } from '@/types/notifications';
+import axios from 'axios';
 
 interface NotificationContextType {
   notifications: Notification[];
@@ -29,84 +30,64 @@ export const NotificationProvider: React.FC<{ children: ReactNode }> = ({ childr
   const { isConnected, on, off } = useSocket();
   const { isAuthenticated, user } = useAuth();
 
-  // Initialize with mock notifications
+  // Fetch notifications from backend
   useEffect(() => {
-    if (isAuthenticated && user) {
-      const mockNotifications: Notification[] = [
-        {
-          id: '1',
-          type: 'new_answer',
-          title: 'New Answer',
-          message: 'Ayush replied to your question "React State Bug"',
-          isRead: false,
-          createdAt: new Date(Date.now() - 5 * 60 * 1000),
-          userId: user.id,
-          relatedId: 'question-1',
-          relatedUrl: '/questions/1'
-        },
-        {
-          id: '2',
-          type: 'mention',
-          title: 'You were mentioned',
-          message: '@pranav_dev mentioned you in a reply',
-          isRead: false,
-          createdAt: new Date(Date.now() - 15 * 60 * 1000),
-          userId: user.id,
-          relatedId: 'answer-5',
-          relatedUrl: '/questions/2#answer-5'
-        },
-        {
-          id: '3',
-          type: 'answer_accepted',
-          title: 'Answer Accepted',
-          message: 'Your answer was accepted by @rahul',
-          isRead: true,
-          createdAt: new Date(Date.now() - 2 * 60 * 60 * 1000),
-          userId: user.id,
-          relatedId: 'answer-3',
-          relatedUrl: '/questions/3#answer-3'
+    const fetchNotifications = async () => {
+      if (!isAuthenticated || !user) return;
+      try {
+        const storedUser = localStorage.getItem('stackit_user') || sessionStorage.getItem('stackit_user');
+        let token = '';
+        if (storedUser) {
+          try {
+            const userData = JSON.parse(storedUser);
+            token = userData.token;
+          } catch (error) {}
         }
-      ];
-      setNotifications(mockNotifications);
-    }
+        if (!token) return;
+        const response = await axios.get(
+          (import.meta.env.VITE_API_URL || 'http://localhost:3100') + '/api/notifications',
+          { headers: { 'Authorization': `Bearer ${token}` } }
+        );
+        setNotifications((response.data.notifications || []).map((n: any) => ({
+          id: n.id.toString(),
+          type: n.type,
+          title: n.title,
+          message: n.message,
+          isRead: n.is_read,
+          createdAt: new Date(n.created_at),
+          userId: n.user_id?.toString?.() || '',
+          relatedId: n.related_id?.toString?.(),
+          relatedType: n.related_type,
+          actionUrl: n.action_url
+        })));
+      } catch (err) {
+        setNotifications([]);
+      }
+    };
+    fetchNotifications();
   }, [isAuthenticated, user]);
 
   // Socket event handlers
   useEffect(() => {
     if (!isConnected || !isAuthenticated) return;
-
     const handleNewNotification = (data: any) => {
       const notification: Notification = {
-        id: data.id || Date.now().toString(),
+        id: data.id?.toString() || Date.now().toString(),
         type: data.type,
         title: data.title,
         message: data.message,
         isRead: false,
-        createdAt: new Date(),
-        userId: data.userId,
-        relatedId: data.relatedId,
-        relatedUrl: data.relatedUrl
+        createdAt: data.created_at ? new Date(data.created_at) : new Date(),
+        userId: data.user_id?.toString?.() || '',
+        relatedId: data.related_id?.toString?.(),
+        relatedType: data.related_type,
+        actionUrl: data.action_url
       };
-      
       setNotifications(prev => [notification, ...prev]);
     };
-
-    const handleNotificationRead = (data: any) => {
-      setNotifications(prev => 
-        prev.map(notification => 
-          notification.id === data.id 
-            ? { ...notification, isRead: true }
-            : notification
-        )
-      );
-    };
-
     on('notification:new', handleNewNotification);
-    on('notification:read', handleNotificationRead);
-
     return () => {
       off('notification:new', handleNewNotification);
-      off('notification:read', handleNotificationRead);
     };
   }, [isConnected, isAuthenticated, on, off]);
 
@@ -119,24 +100,61 @@ export const NotificationProvider: React.FC<{ children: ReactNode }> = ({ childr
     setNotifications(prev => [notification, ...prev]);
   };
 
-  const markAsRead = (id: string) => {
-    setNotifications(prev => 
-      prev.map(notification => 
-        notification.id === id 
-          ? { ...notification, isRead: true }
-          : notification
-      )
-    );
+  const markAsRead = async (id: string) => {
+    setNotifications(prev => prev.map(n => n.id === id ? { ...n, isRead: true } : n));
+    // Optionally, update backend
+    try {
+      const storedUser = localStorage.getItem('stackit_user') || sessionStorage.getItem('stackit_user');
+      let token = '';
+      if (storedUser) {
+        try {
+          const userData = JSON.parse(storedUser);
+          token = userData.token;
+        } catch (error) {}
+      }
+      if (!token) return;
+      await axios.put((import.meta.env.VITE_API_URL || 'http://localhost:3100') + `/api/notifications/${id}/read`, {}, {
+        headers: { 'Authorization': `Bearer ${token}` }
+      });
+    } catch (err) {}
   };
 
-  const markAllAsRead = () => {
-    setNotifications(prev => 
-      prev.map(notification => ({ ...notification, isRead: true }))
-    );
+  const markAllAsRead = async () => {
+    setNotifications(prev => prev.map(n => ({ ...n, isRead: true })));
+    // Optionally, update backend
+    try {
+      const storedUser = localStorage.getItem('stackit_user') || sessionStorage.getItem('stackit_user');
+      let token = '';
+      if (storedUser) {
+        try {
+          const userData = JSON.parse(storedUser);
+          token = userData.token;
+        } catch (error) {}
+      }
+      if (!token) return;
+      await axios.put((import.meta.env.VITE_API_URL || 'http://localhost:3100') + '/api/notifications/read-all', {}, {
+        headers: { 'Authorization': `Bearer ${token}` }
+      });
+    } catch (err) {}
   };
 
-  const deleteNotification = (id: string) => {
-    setNotifications(prev => prev.filter(notification => notification.id !== id));
+  const deleteNotification = async (id: string) => {
+    setNotifications(prev => prev.filter(n => n.id !== id));
+    // Optionally, update backend
+    try {
+      const storedUser = localStorage.getItem('stackit_user') || sessionStorage.getItem('stackit_user');
+      let token = '';
+      if (storedUser) {
+        try {
+          const userData = JSON.parse(storedUser);
+          token = userData.token;
+        } catch (error) {}
+      }
+      if (!token) return;
+      await axios.delete((import.meta.env.VITE_API_URL || 'http://localhost:3100') + `/api/notifications/${id}`, {
+        headers: { 'Authorization': `Bearer ${token}` }
+      });
+    } catch (err) {}
   };
 
   const clearAll = () => {

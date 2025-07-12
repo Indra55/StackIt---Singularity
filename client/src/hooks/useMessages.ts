@@ -4,6 +4,7 @@ import { useSocket } from '@/contexts/SocketContext';
 import { Message, Conversation, TypingIndicator } from '@/types/messaging';
 import { useAuth } from '@/contexts/AuthContext';
 import { useToast } from '@/hooks/use-toast';
+import axios from 'axios';
 
 export const useMessages = (conversationId: string) => {
   const [messages, setMessages] = useState<Message[]>([]);
@@ -16,107 +17,40 @@ export const useMessages = (conversationId: string) => {
   const { user } = useAuth();
   const { toast } = useToast();
 
-  // Mock data for development
-  const mockMessages: Message[] = [
-    {
-      id: '1',
-      conversationId,
-      senderId: '2',
-      sender: {
-        id: '2',
-        username: 'sarah_dev',
-        email: 'sarah@example.com',
-        firstName: 'Sarah',
-        lastName: 'Johnson',
-        isOnline: true,
-        lastSeen: new Date()
-      },
-      content: 'Hey! I saw your question about React hooks. I think I can help with that.',
-      messageType: 'text',
-      status: 'read',
-      createdAt: new Date(Date.now() - 1000 * 60 * 10),
-      updatedAt: new Date(Date.now() - 1000 * 60 * 10)
-    },
-    {
-      id: '2',
-      conversationId,
-      senderId: user?.id || '1',
-      sender: {
-        id: user?.id || '1',
-        username: user?.username || 'current_user',
-        email: user?.email || 'user@example.com',
-        firstName: user?.firstName || 'You',
-        lastName: user?.lastName || '',
-        isOnline: true,
-        lastSeen: new Date()
-      },
-      content: 'That would be amazing! I\'m struggling with useEffect dependencies.',
-      messageType: 'text',
-      status: 'read',
-      createdAt: new Date(Date.now() - 1000 * 60 * 8),
-      updatedAt: new Date(Date.now() - 1000 * 60 * 8)
-    },
-    {
-      id: '3',
-      conversationId,
-      senderId: '2',
-      sender: {
-        id: '2',
-        username: 'sarah_dev',
-        email: 'sarah@example.com',
-        firstName: 'Sarah',
-        lastName: 'Johnson',
-        isOnline: true,
-        lastSeen: new Date()
-      },
-      content: `useEffect(() => {
-  // This runs on every render
-  fetchData();
-}, []); // Empty dependency array means it only runs once
-
-useEffect(() => {
-  // This runs when 'count' changes
-  updateCounter();
-}, [count]);`,
-      messageType: 'code',
-      status: 'read',
-      createdAt: new Date(Date.now() - 1000 * 60 * 5),
-      updatedAt: new Date(Date.now() - 1000 * 60 * 5)
-    },
-    {
-      id: '4',
-      conversationId,
-      senderId: user?.id || '1',
-      sender: {
-        id: user?.id || '1',
-        username: user?.username || 'current_user',
-        email: user?.email || 'user@example.com',
-        firstName: user?.firstName || 'You',
-        lastName: user?.lastName || '',
-        isOnline: true,
-        lastSeen: new Date()
-      },
-      content: 'Perfect! That makes so much sense now. Thank you! 🎉',
-      messageType: 'text',
-      status: 'delivered',
-      createdAt: new Date(Date.now() - 1000 * 60 * 2),
-      updatedAt: new Date(Date.now() - 1000 * 60 * 2)
-    }
-  ];
-
   // Initialize messages
   useEffect(() => {
     setIsLoading(true);
-    // Simulate API call
-    setTimeout(() => {
-      // Only show mock messages for demo conversations
-      if (['1', '2', '3'].includes(conversationId)) {
-        setMessages(mockMessages);
-      } else {
+    const fetchMessages = async () => {
+      try {
+        const storedUser = localStorage.getItem('stackit_user') || sessionStorage.getItem('stackit_user');
+        let token = '';
+        if (storedUser) {
+          try {
+            const userData = JSON.parse(storedUser);
+            token = userData.token;
+          } catch (error) {}
+        }
+        if (!token) {
+          setMessages([]);
+          setIsLoading(false);
+          return;
+        }
+        const response = await axios.get(
+          (import.meta.env.VITE_API_URL || 'http://localhost:3100') + `/api/chats/${conversationId}/messages`,
+          { headers: { 'Authorization': `Bearer ${token}` } }
+        );
+        setMessages((response.data.messages || []).map((m: any) => ({
+          ...m,
+          createdAt: new Date(m.created_at),
+          updatedAt: new Date(m.updated_at || m.created_at)
+        })));
+      } catch (err) {
         setMessages([]);
+      } finally {
+        setIsLoading(false);
       }
-      setIsLoading(false);
-    }, 500);
+    };
+    fetchMessages();
   }, [conversationId]);
 
   // Socket connection status

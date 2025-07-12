@@ -14,6 +14,7 @@ import { useSocket } from '@/contexts/SocketContext';
 import { cn } from '@/lib/utils';
 import { useAuth } from '@/contexts/AuthContext';
 import PlatformNavbar from '@/components/navigation/PlatformNavbar';
+import axios from 'axios';
 
 const Messages = () => {
   const { conversationId } = useParams();
@@ -22,6 +23,8 @@ const Messages = () => {
   const { isConnected } = useSocket();
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedConversation, setSelectedConversation] = useState<string | null>(conversationId || null);
+  const [conversations, setConversations] = useState<any[]>([]);
+  const [isLoadingConversations, setIsLoadingConversations] = useState(true);
 
   // On mount, check for selected_conversation_id in localStorage (for desktop navigation)
   React.useEffect(() => {
@@ -32,6 +35,49 @@ const Messages = () => {
     }
   }, []);
 
+  useEffect(() => {
+    const fetchConversations = async () => {
+      if (!user) return;
+      setIsLoadingConversations(true);
+      try {
+        const storedUser = localStorage.getItem('stackit_user') || sessionStorage.getItem('stackit_user');
+        let token = '';
+        if (storedUser) {
+          try {
+            const userData = JSON.parse(storedUser);
+            token = userData.token;
+          } catch (error) {}
+        }
+        if (!token) {
+          setConversations([]);
+          return;
+        }
+        const response = await axios.get(
+          (import.meta.env.VITE_API_URL || 'http://localhost:3100') + '/api/chats',
+          { headers: { 'Authorization': `Bearer ${token}` } }
+        );
+        setConversations((response.data.chats || []).map((chat: any) => ({
+          id: chat.id.toString(),
+          participant: {
+            id: chat.other_user_id?.toString?.() || '',
+            username: chat.other_username,
+            avatarUrl: chat.other_avatar,
+            isOnline: false,
+            lastSeen: new Date()
+          },
+          lastMessage: chat.last_message || '',
+          unreadCount: chat.unread_count || 0,
+          updatedAt: new Date(chat.updated_at || chat.created_at)
+        })));
+      } catch (err) {
+        setConversations([]);
+      } finally {
+        setIsLoadingConversations(false);
+      }
+    };
+    fetchConversations();
+  }, [user]);
+
   const {
     messages,
     typingIndicators,
@@ -40,23 +86,7 @@ const Messages = () => {
   } = useMessages(selectedConversation || '1');
 
   // Load conversations from localStorage if present
-  const conversationsKey = 'mock_conversations';
-  let storedConversations = [];
-  try {
-    storedConversations = JSON.parse(localStorage.getItem(conversationsKey) || '[]');
-  } catch (e) {
-    storedConversations = [];
-  }
-  // Convert date strings to Date objects
-  const parsedConversations = storedConversations.map((conv: any) => ({
-    ...conv,
-    updatedAt: conv.updatedAt ? new Date(conv.updatedAt) : new Date(),
-    participant: {
-      ...conv.participant,
-      lastSeen: conv.participant && conv.participant.lastSeen ? new Date(conv.participant.lastSeen) : new Date(),
-    },
-  }));
-  const mockConversations = parsedConversations.length > 0 ? parsedConversations : [
+  const mockConversations = conversations.length > 0 ? conversations : [
     {
       id: '1',
       participant: {
@@ -224,51 +254,57 @@ const Messages = () => {
               </div>
               {/* Conversations List */}
               <div className="flex-1 overflow-y-auto min-h-0">
-                {mockConversations.map((conversation) => (
-                  <div
-                    key={conversation.id}
-                    onClick={() => handleConversationSelect(conversation.id)}
-                    className={cn(
-                      "p-3 sm:p-4 border-b border-gray-100 cursor-pointer transition-all duration-200 hover:bg-gray-50 flex items-center gap-3",
-                      selectedConversation === conversation.id && "bg-pulse-50 border-l-4 border-l-pulse-500"
-                    )}
-                  >
-                    <div className="relative flex-shrink-0">
-                      <Avatar className="w-10 h-10 sm:w-12 sm:h-12">
-                        <AvatarImage src={conversation.participant.avatarUrl} />
-                        <AvatarFallback className="bg-gradient-to-br from-pulse-500 to-pulse-600 text-white">
-                          {conversation.participant.firstName?.[0]}{conversation.participant.lastName?.[0]}
-                        </AvatarFallback>
-                      </Avatar>
-                      {conversation.participant.isOnline && (
-                        <div className="absolute -bottom-1 -right-1 w-3.5 h-3.5 sm:w-4 sm:h-4 bg-green-400 border-2 border-white rounded-full"></div>
-                      )}
-                    </div>
-                    <div className="flex-1 min-w-0">
-                      <div className="flex items-center justify-between mb-1">
-                        <h3 className="font-semibold text-gray-900 truncate text-sm sm:text-base">
-                          {conversation.participant.firstName} {conversation.participant.lastName}
-                        </h3>
-                        <div className="flex items-center space-x-2">
-                          <span className="text-xs text-gray-500">
-                            {formatLastSeen(conversation.updatedAt)}
-                          </span>
-                          {conversation.unreadCount > 0 && (
-                            <Badge variant="destructive" className="bg-red-500 hover:bg-red-600 animate-pulse">
-                              {conversation.unreadCount}
-                            </Badge>
-                          )}
-                        </div>
-                      </div>
-                      <p className="text-xs sm:text-sm text-gray-600 truncate mb-0.5">
-                        @{conversation.participant.username}
-                      </p>
-                      <p className="text-xs sm:text-sm text-gray-500 truncate">
-                        {conversation.lastMessage}
-                      </p>
-                    </div>
+                {isLoadingConversations ? (
+                  <div className="flex items-center justify-center py-8">
+                    <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-pulse-500"></div>
                   </div>
-                ))}
+                ) : (
+                  mockConversations.map((conversation) => (
+                    <div
+                      key={conversation.id}
+                      onClick={() => handleConversationSelect(conversation.id)}
+                      className={cn(
+                        "p-3 sm:p-4 border-b border-gray-100 cursor-pointer transition-all duration-200 hover:bg-gray-50 flex items-center gap-3",
+                        selectedConversation === conversation.id && "bg-pulse-50 border-l-4 border-l-pulse-500"
+                      )}
+                    >
+                      <div className="relative flex-shrink-0">
+                        <Avatar className="w-10 h-10 sm:w-12 sm:h-12">
+                          <AvatarImage src={conversation.participant.avatarUrl} />
+                          <AvatarFallback className="bg-gradient-to-br from-pulse-500 to-pulse-600 text-white">
+                            {conversation.participant.firstName?.[0]}{conversation.participant.lastName?.[0]}
+                          </AvatarFallback>
+                        </Avatar>
+                        {conversation.participant.isOnline && (
+                          <div className="absolute -bottom-1 -right-1 w-3.5 h-3.5 sm:w-4 sm:h-4 bg-green-400 border-2 border-white rounded-full"></div>
+                        )}
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <div className="flex items-center justify-between mb-1">
+                          <h3 className="font-semibold text-gray-900 truncate text-sm sm:text-base">
+                            {conversation.participant.firstName} {conversation.participant.lastName}
+                          </h3>
+                          <div className="flex items-center space-x-2">
+                            <span className="text-xs text-gray-500">
+                              {formatLastSeen(conversation.updatedAt)}
+                            </span>
+                            {conversation.unreadCount > 0 && (
+                              <Badge variant="destructive" className="bg-red-500 hover:bg-red-600 animate-pulse">
+                                {conversation.unreadCount}
+                              </Badge>
+                            )}
+                          </div>
+                        </div>
+                        <p className="text-xs sm:text-sm text-gray-600 truncate mb-0.5">
+                          @{conversation.participant.username}
+                        </p>
+                        <p className="text-xs sm:text-sm text-gray-500 truncate">
+                          {conversation.lastMessage}
+                        </p>
+                      </div>
+                    </div>
+                  ))
+                )}
               </div>
             </div>
             {/* Conversation Thread */}
