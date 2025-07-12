@@ -436,23 +436,23 @@ router.post("/posts/:id/comment", authenticateToken, requireAuth, async (req, re
     // Note: answer_count is automatically updated by the database trigger
 
     // Get post details for notification
-    const postQuery = `
+    const postDetailsQuery = `
       SELECT p.title, p.user_id, u.username as post_owner_username
       FROM posts p
       JOIN users u ON p.user_id = u.id
       WHERE p.id = $1
     `;
-    const postResult = await pool.query(postQuery, [postID]);
-    const post = postResult.rows[0];
+    const postDetailsResult = await pool.query(postDetailsQuery, [postID]);
+    const postDetails = postDetailsResult.rows[0];
 
     // Notify post owner about new comment (if not commenting on own post)
-    if (post.user_id !== userID) {
+    if (postDetails.user_id !== userID) {
       try {
         await createNotification({
-          user_id: post.user_id,
+          user_id: postDetails.user_id,
           type: 'comment',
           title: 'New Comment',
-          message: `${req.user.username} commented on your post "${post.title}"`,
+          message: `${req.user.username} commented on your post "${postDetails.title}"`,
           related_id: postID,
           related_type: 'post'
         });
@@ -475,7 +475,7 @@ router.post("/posts/:id/comment", authenticateToken, requireAuth, async (req, re
                 user_id: userResult.rows[0].id,
                 type: 'mention',
                 title: 'You were mentioned',
-                message: `${req.user.username} mentioned you in a comment on "${post.title}"`,
+                message: `${req.user.username} mentioned you in a comment on "${postDetails.title}"`,
                 related_id: postID,
                 related_type: 'post'
               });
@@ -794,13 +794,13 @@ router.post("/comments/:id/downvote", authenticateToken, requireAuth, async (req
       comment: updatedComment.rows[0]
     });
   } catch (err) {
-            console.error(err);
+    console.error(err);
     res.status(500).json({
       message: "Cannot downvote comment",
-              status: "error",
-              error: err.message
-            });
-        }
+      status: "error",
+      error: err.message
+    });
+  }
 });
 
 // Update post status
@@ -809,8 +809,8 @@ router.put("/posts/:id/status", authenticateToken, requireAuth, async (req, res)
   const { status } = req.body;
   const userId = req.user.id;
 
-  if (!status || !['open', 'closed', 'duplicate', 'off-topic'].includes(status)) {
-      return res.status(400).json({
+    if (!status || !['open', 'closed', 'duplicate', 'off-topic'].includes(status)) {
+    return res.status(400).json({
       message: "Invalid status. Must be one of: open, closed, duplicate, off-topic",
       status: "error"
     });
@@ -840,13 +840,13 @@ router.put("/posts/:id/status", authenticateToken, requireAuth, async (req, res)
       status: "success"
     });
   } catch (err) {
-            console.error(err);
+    console.error(err);
     res.status(500).json({
       message: "Cannot update post status",
-              status: "error",
-              error: err.message
-            });
-        }
+      status: "error",
+      error: err.message
+    });
+  }
 });
 
 module.exports = router;
