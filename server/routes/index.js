@@ -18,7 +18,35 @@ router.get("/",(req,res)=>{
                 create: "POST /posts/create",
                 upvote: "POST /posts/:id/upvote",
                 downvote: "POST /posts/:id/downvote",
-                comment: "POST /posts/:id/comment"
+                comment: "POST /posts/:id/comment",
+                getByTag: "GET /posts/tag/:tag",
+                getAllTags: "GET /tags"
+            },
+            uploads: {
+                avatar: "POST /api/uploads/avatar",
+                postImage: "POST /api/uploads/post-image",
+                commentImage: "POST /api/uploads/comment-image",
+                getUserUploads: "GET /api/uploads/user/:userId",
+                deleteUpload: "DELETE /api/uploads/:uploadId"
+            },
+            communities: {
+                getAll: "GET /api/communities",
+                getOne: "GET /api/communities/:name",
+                create: "POST /api/communities",
+                join: "POST /api/communities/:name/join",
+                leave: "POST /api/communities/:name/leave",
+                getPosts: "GET /api/communities/:name/posts",
+                getSubscribed: "GET /api/communities/user/subscribed",
+                moderation: {
+                    ban: "POST /api/communities/:name/ban",
+                    unban: "POST /api/communities/:name/unban",
+                    deletePost: "DELETE /api/communities/:name/posts/:postId",
+                    deleteComment: "DELETE /api/communities/:name/comments/:commentId",
+                    promote: "POST /api/communities/:name/promote",
+                    demote: "POST /api/communities/:name/demote",
+                    getBans: "GET /api/communities/:name/bans",
+                    getModLog: "GET /api/communities/:name/moderation-log"
+                }
             }
         }
     })

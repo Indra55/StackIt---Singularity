@@ -18,12 +18,12 @@ require("dotenv").config()
 
 // Enable CORS
 app.use(cors({
-  origin: process.env.FRONTEND_URL || 'http://localhost:3000',
+  origin: process.env.FRONTEND_URL || 'http://localhost:3000', 
   credentials: true
 }))
 
 // Parse JSON bodies
-app.use(express.json())
+app.use(express.json()) 
 app.use(express.urlencoded({extended:false})) 
 
 app.use("/", require("./routes/index"))
@@ -31,6 +31,8 @@ app.use("/users",require("./routes/users"))
 app.use("/",require("./routes/posts"))
 app.use("/api/notifications", require("./routes/notifications"))
 app.use("/api/chats", require("./routes/chats"))
+app.use("/api/uploads", require("./routes/uploads"))
+app.use("/api/communities", require("./routes/communities"))
 
 // Map userId to socketId(s)
 const userSocketMap = new Map();
