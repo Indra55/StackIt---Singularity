@@ -41,16 +41,16 @@ const TestimonialCard = ({
   role,
   backgroundImage = "/background-section1.png"
 }: TestimonialProps) => {
-  return <div className="bg-cover bg-center rounded-lg p-8 h-full flex flex-col justify-between text-white transform transition-transform duration-300 hover:-translate-y-2 relative overflow-hidden" style={{
+  return <div className="bg-cover bg-center rounded-lg p-4 sm:p-6 md:p-8 h-full flex flex-col justify-between text-white transform transition-transform duration-300 hover:-translate-y-2 relative overflow-hidden" style={{
     backgroundImage: `url('${backgroundImage}')`
   }}>
-      <div className="absolute top-0 right-0 w-24 h-24 bg-white z-10"></div>
+      <div className="absolute top-0 right-0 w-16 h-16 sm:w-20 sm:h-20 md:w-24 md:h-24 bg-white z-10"></div>
       
       <div className="relative z-0">
-        <p className="text-xl mb-8 font-medium leading-relaxed pr-20">{`"${content}"`}</p>
+        <p className="text-sm sm:text-base md:text-xl mb-4 sm:mb-6 md:mb-8 font-medium leading-relaxed pr-12 sm:pr-16 md:pr-20">{`"${content}"`}</p>
         <div>
-          <h4 className="font-semibold text-xl">{author}</h4>
-          <p className="text-white/80">{role}</p>
+          <h4 className="font-semibold text-base sm:text-lg md:text-xl">{author}</h4>
+          <p className="text-white/80 text-xs sm:text-sm md:text-base">{role}</p>
         </div>
       </div>
     </div>;
@@ -59,18 +59,18 @@ const TestimonialCard = ({
 const Testimonials = () => {
   const sectionRef = useRef<HTMLDivElement>(null);
 
-  return <section className="py-12 bg-white relative" id="testimonials" ref={sectionRef}> {/* Reduced from py-20 */}
+  return <section className="py-8 sm:py-12 bg-white relative" id="testimonials" ref={sectionRef}>
       <div className="section-container opacity-0 animate-on-scroll">
-        <div className="flex items-center gap-4 mb-6">
+        <div className="flex items-center gap-4 mb-4 sm:mb-6">
           <div className="pulse-chip">
-            <span className="inline-flex items-center justify-center w-5 h-5 rounded-full bg-pulse-500 text-white mr-2">04</span>
-            <span>Testimonials</span>
+            <span className="inline-flex items-center justify-center w-4 h-4 sm:w-5 sm:h-5 rounded-full bg-pulse-500 text-white mr-2 text-xs">04</span>
+            <span className="text-xs sm:text-sm">Testimonials</span>
           </div>
         </div>
         
-        <h2 className="text-5xl font-display font-bold mb-12 text-left">What others say</h2>
+        <h2 className="text-2xl sm:text-3xl md:text-4xl lg:text-5xl font-display font-bold mb-6 sm:mb-8 md:mb-12 text-left">What others say</h2>
         
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-6 md:gap-8">
           {testimonials.map((testimonial, index) => <TestimonialCard key={index} content={testimonial.content} author={testimonial.author} role={testimonial.role} gradient={testimonial.gradient} backgroundImage={testimonial.backgroundImage} />)}
         </div>
       </div>

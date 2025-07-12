@@ -55,26 +55,26 @@ const QuestionCard: React.FC<QuestionCardProps> = ({ question }) => {
 
   return (
     <div className="bg-white rounded-lg border border-border hover:shadow-lg transition-all duration-300 hover:-translate-y-1 group">
-      <div className="p-6">
-        <div className="flex gap-4">
+      <div className="p-4 sm:p-6">
+        <div className="flex gap-3 sm:gap-4">
           {/* Voting Controls */}
-          <div className="flex flex-col items-center space-y-2 min-w-[50px]">
+          <div className="flex flex-col items-center space-y-1 sm:space-y-2 min-w-[40px] sm:min-w-[50px]">
             <button
               onClick={() => handleVote('up')}
               disabled={!user || userVote === 'up'}
               className={cn(
-                "p-2 rounded-full transition-all duration-200 hover:scale-110",
+                "p-1.5 sm:p-2 rounded-full transition-all duration-200 hover:scale-110",
                 userVote === 'up'
                   ? "bg-pulse-500 text-white shadow-lg"
                   : "bg-gray-100 text-gray-600 hover:bg-pulse-100 hover:text-pulse-600",
                 !user && "opacity-60 cursor-not-allowed"
               )}
             >
-              <ThumbsUp className="w-5 h-5" />
+              <ThumbsUp className="w-4 h-4 sm:w-5 sm:h-5" />
             </button>
             
             <span className={cn(
-              "font-bold text-lg transition-colors",
+              "font-bold text-sm sm:text-lg transition-colors",
               userVote === 'up' ? "text-pulse-600" : userVote === 'down' ? "text-red-600" : "text-gray-700"
             )}>
               {currentVotes}
@@ -84,14 +84,14 @@ const QuestionCard: React.FC<QuestionCardProps> = ({ question }) => {
               onClick={() => handleVote('down')}
               disabled={!user || userVote === 'down'}
               className={cn(
-                "p-2 rounded-full transition-all duration-200 hover:scale-110",
+                "p-1.5 sm:p-2 rounded-full transition-all duration-200 hover:scale-110",
                 userVote === 'down'
                   ? "bg-red-500 text-white shadow-lg"
                   : "bg-gray-100 text-gray-600 hover:bg-red-100 hover:text-red-600",
                 !user && "opacity-60 cursor-not-allowed"
               )}
             >
-              <ThumbsDown className="w-5 h-5" />
+              <ThumbsDown className="w-4 h-4 sm:w-5 sm:h-5" />
             </button>
           </div>
 
@@ -102,22 +102,22 @@ const QuestionCard: React.FC<QuestionCardProps> = ({ question }) => {
               to={`/questions/${question.id}`}
               className="block group-hover:text-pulse-600 transition-colors"
             >
-              <h2 className="text-lg font-semibold text-gray-900 mb-2 line-clamp-2 hover:underline">
+              <h2 className="text-base sm:text-lg font-semibold text-gray-900 mb-2 line-clamp-2 hover:underline">
                 {question.title}
               </h2>
             </Link>
 
             {/* Description Preview */}
-            <p className="text-gray-600 text-sm mb-3 line-clamp-2">
+            <p className="text-gray-600 text-xs sm:text-sm mb-3 line-clamp-2">
               {question.description}
             </p>
 
             {/* Tags */}
-            <div className="flex flex-wrap gap-2 mb-4">
+            <div className="flex flex-wrap gap-1.5 sm:gap-2 mb-3 sm:mb-4">
               {question.tags.map((tag) => (
                 <button
                   key={tag}
-                  className="px-3 py-1 bg-pulse-100 text-pulse-700 rounded-full text-xs font-medium hover:bg-pulse-200 transition-colors"
+                  className="px-2 sm:px-3 py-1 bg-pulse-100 text-pulse-700 rounded-full text-xs font-medium hover:bg-pulse-200 transition-colors"
                 >
                   {tag}
                 </button>
@@ -125,14 +125,14 @@ const QuestionCard: React.FC<QuestionCardProps> = ({ question }) => {
             </div>
 
             {/* Meta Information */}
-            <div className="flex items-center justify-between text-sm text-gray-500">
-              <div className="flex items-center space-x-4">
+            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between text-xs sm:text-sm text-gray-500 space-y-2 sm:space-y-0">
+              <div className="flex items-center space-x-3 sm:space-x-4">
                 {/* Author */}
                 <Link 
                   to={`/users/${question.author.id}`}
-                  className="flex items-center space-x-2 hover:text-pulse-600 transition-colors"
+                  className="flex items-center space-x-1.5 sm:space-x-2 hover:text-pulse-600 transition-colors"
                 >
-                  <div className="w-6 h-6 bg-pulse-500 rounded-full flex items-center justify-center text-white text-xs font-semibold">
+                  <div className="w-5 h-5 sm:w-6 sm:h-6 bg-pulse-500 rounded-full flex items-center justify-center text-white text-xs font-semibold">
                     {question.author.username.charAt(0).toUpperCase()}
                   </div>
                   <span className="font-medium">@{question.author.username}</span>
@@ -144,16 +144,16 @@ const QuestionCard: React.FC<QuestionCardProps> = ({ question }) => {
               </div>
 
               {/* Answer and View Stats */}
-              <div className="flex items-center space-x-4">
+              <div className="flex items-center space-x-3 sm:space-x-4">
                 <div className="flex items-center space-x-1">
-                  <Eye className="w-4 h-4" />
+                  <Eye className="w-3 h-3 sm:w-4 sm:h-4" />
                   <span>{question.views}</span>
                 </div>
                 
                 <Link
                   to={`/questions/${question.id}#answers`}
                   className={cn(
-                    "flex items-center space-x-1 px-3 py-1 rounded-full text-xs font-medium transition-colors",
+                    "flex items-center space-x-1 px-2 sm:px-3 py-1 rounded-full text-xs font-medium transition-colors",
                     question.answers > 0
                       ? question.hasAcceptedAnswer
                         ? "bg-green-100 text-green-700 hover:bg-green-200"
@@ -161,8 +161,8 @@ const QuestionCard: React.FC<QuestionCardProps> = ({ question }) => {
                       : "bg-gray-100 text-gray-600 hover:bg-gray-200"
                   )}
                 >
-                  {question.hasAcceptedAnswer && <Check className="w-3 h-3" />}
-                  <MessageSquare className="w-3 h-3" />
+                  {question.hasAcceptedAnswer && <Check className="w-2.5 h-2.5 sm:w-3 sm:h-3" />}
+                  <MessageSquare className="w-2.5 h-2.5 sm:w-3 sm:h-3" />
                   <span>{question.answers} {question.answers === 1 ? 'Answer' : 'Answers'}</span>
                 </Link>
               </div>

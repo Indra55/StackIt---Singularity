@@ -202,7 +202,7 @@ const QuestionDetail = () => {
   return (
     <div className="min-h-screen bg-gradient-to-br from-gray-50 via-white to-pulse-50/30">
       <PlatformNavbar />
-      <div className="container mx-auto px-6 py-4">
+      <div className="container mx-auto px-4 sm:px-6 py-3 sm:py-4">
         <Breadcrumb>
           <BreadcrumbList>
             <BreadcrumbItem>
@@ -219,11 +219,11 @@ const QuestionDetail = () => {
           </BreadcrumbList>
         </Breadcrumb>
       </div>
-      <div className="container mx-auto px-6 py-8">
-        <div className="flex gap-8">
+      <div className="container mx-auto px-4 sm:px-6 py-6 sm:py-8">
+        <div className="flex flex-col xl:flex-row gap-4 sm:gap-6 xl:gap-8">
           {/* Main Content */}
           <div className="flex-1 max-w-4xl">
-            <div className="space-y-8">
+            <div className="space-y-6 sm:space-y-8">
               <QuestionBlock question={question} onVote={handleVote} onAcceptAnswer={handleAcceptAnswer} />
               <AnswerList answers={answers} onVote={handleVote} onAcceptAnswer={handleAcceptAnswer} questionOwnerId={question.author.id} />
               <AnswerForm onSubmit={handleNewAnswer} />

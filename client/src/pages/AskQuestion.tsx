@@ -11,6 +11,8 @@ import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { FormErrorBanner } from '@/components/form/FormErrorBanner';
 import { Breadcrumb, BreadcrumbList, BreadcrumbItem, BreadcrumbLink, BreadcrumbPage, BreadcrumbSeparator } from '@/components/ui/breadcrumb';
+import PlatformNavbar from '@/components/navigation/PlatformNavbar';
+import { ArrowLeft } from 'lucide-react';
 
 const AskQuestion = () => {
   const { user, isAuthenticated } = useAuth();
@@ -26,6 +28,7 @@ const AskQuestion = () => {
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState(false);
   const [lockedCommunity, setLockedCommunity] = useState<any>(null);
+  const [errorVisible, setErrorVisible] = useState(false);
 
   useEffect(() => {
     // Fetch communities and tags from backend
@@ -47,6 +50,7 @@ const AskQuestion = () => {
         }
       } catch (err: any) {
         setError(err.message || 'Failed to load data');
+        setErrorVisible(true);
       }
     };
     fetchData();
@@ -74,55 +78,171 @@ const AskQuestion = () => {
       setSuccess(true);
       setLoading(false);
       navigate('/questions');
-    } catch (err: any) {
-      setError(err.message || 'Failed to post question');
-      setLoading(false);
-    }
+          } catch (err: any) {
+        setError(err.message || 'Failed to post question');
+        setErrorVisible(true);
+        setLoading(false);
+      }
   };
 
   if (!isAuthenticated) {
-    return <Card className="p-6 mt-8 text-center">Please log in to ask a question.</Card>;
+    return (
+      <div className="min-h-screen bg-gray-50">
+        <PlatformNavbar />
+        <div className="pt-16">
+          <div className="container mx-auto px-4 sm:px-6 lg:px-8 py-8">
+            <Card className="max-w-md mx-auto p-6 text-center">
+              <p className="text-gray-600">Please log in to ask a question.</p>
+              <Button 
+                onClick={() => navigate('/auth/login')} 
+                className="mt-4 w-full"
+              >
+                Log In
+              </Button>
+            </Card>
+          </div>
+        </div>
+      </div>
+    );
   }
 
   return (
-    <Card className="max-w-2xl mx-auto mt-8 p-6">
-      <h2 className="text-2xl font-bold mb-4">Ask a Question</h2>
-      {error && <FormErrorBanner message={error} />}
-      <form onSubmit={handleSubmit}>
-        <FloatingLabel
-          label="Title"
-          value={title}
-          onChange={setTitle}
-          required
-        />
-        <div className="mt-4">
-          <RichTextEditor
-            value={content}
-            onChange={setContent}
-            placeholder="Describe your question in detail..."
-          />
+    <div className="min-h-screen bg-gray-50">
+      <PlatformNavbar />
+      <div className="pt-16">
+        <div className="container mx-auto px-4 sm:px-6 lg:px-8 py-2 sm:py-4">
+          {/* Breadcrumb Navigation */}
+          <div className="mb-3">
+            <Breadcrumb>
+              <BreadcrumbList>
+                <BreadcrumbItem>
+                  <BreadcrumbLink 
+                    onClick={() => navigate('/questions')}
+                    className="cursor-pointer hover:text-pulse-600"
+                  >
+                    Questions
+                  </BreadcrumbLink>
+                </BreadcrumbItem>
+                <BreadcrumbSeparator />
+                <BreadcrumbItem>
+                  <BreadcrumbPage>Ask Question</BreadcrumbPage>
+                </BreadcrumbItem>
+              </BreadcrumbList>
+            </Breadcrumb>
+          </div>
+
+          {/* Back Button */}
+          <div className="mb-3">
+            <Button
+              variant="ghost"
+              onClick={() => navigate('/questions')}
+              className="flex items-center space-x-2 text-gray-600 hover:text-gray-900 text-sm"
+            >
+              <ArrowLeft className="h-4 w-4" />
+              <span>Back to Questions</span>
+            </Button>
+          </div>
+
+          {/* Main Content */}
+          <div className="max-w-4xl mx-auto">
+            <Card className="p-4 sm:p-6">
+              <div className="mb-4">
+                <h1 className="text-xl sm:text-2xl font-bold text-gray-900 mb-1">
+                  Ask a Question
+                </h1>
+                <p className="text-gray-600 text-sm">
+                  Share your knowledge or get help from the community
+                </p>
+              </div>
+
+              {error && (
+                <FormErrorBanner 
+                  message={error} 
+                  visible={errorVisible}
+                  onDismiss={() => setErrorVisible(false)}
+                />
+              )}
+
+              <form onSubmit={handleSubmit} className="space-y-3">
+                {/* Title Field */}
+                <div>
+                  <FloatingLabel
+                    label="Title"
+                    value={title}
+                    onChange={setTitle}
+                    required
+                    className="text-base"
+                  />
+                  <p className="text-xs text-gray-500 mt-1">
+                    Be specific and imagine you're asking another person
+                  </p>
+                </div>
+
+                {/* Content Field */}
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    Question Details *
+                  </label>
+                  <RichTextEditor
+                    value={content}
+                    onChange={setContent}
+                    placeholder="Describe your question in detail..."
+                  />
+                  <p className="text-xs text-gray-500 mt-1">
+                    Include all the information someone would need to answer your question
+                  </p>
+                </div>
+
+                {/* Community Selector */}
+                <div>
+                  <CommunitySelector
+                    communities={communities}
+                    value={community}
+                    onChange={c => setCommunity(c)}
+                    required={false}
+                    locked={!!lockedCommunity}
+                  />
+                  <p className="text-xs text-gray-500 mt-1">
+                    Choose a community to post in (optional)
+                  </p>
+                </div>
+
+                {/* Tags Input */}
+                <div>
+                  <TagsInput
+                    suggestedTags={allTags.map((t: any) => t.name)}
+                    value={tags}
+                    onChange={setTags}
+                  />
+                  <p className="text-xs text-gray-500 mt-1">
+                    Add up to 5 tags to help others find your question
+                  </p>
+                </div>
+
+                {/* Submit Button */}
+                <div className="flex flex-col sm:flex-row gap-3 pt-3">
+                  <Button 
+                    type="submit" 
+                    className="flex-1 bg-pulse-600 hover:bg-pulse-700 text-white py-2.5 text-sm font-medium" 
+                    disabled={loading}
+                  >
+                    {loading ? 'Posting...' : 'Post Question'}
+                  </Button>
+                  <Button 
+                    type="button"
+                    variant="outline" 
+                    onClick={() => navigate('/questions')}
+                    className="flex-1 sm:flex-none"
+                  >
+                    Cancel
+                  </Button>
+                </div>
+              </form>
+            </Card>
+          </div>
         </div>
-        <div className="mt-4">
-          <CommunitySelector
-            communities={communities}
-            value={community}
-            onChange={c => setCommunity(c)}
-            required={false}
-            locked={!!lockedCommunity}
-          />
-        </div>
-        <div className="mt-4">
-          <TagsInput
-            allTags={allTags.map((t: any) => t.name)}
-            value={tags}
-            onChange={setTags}
-          />
-        </div>
-        <Button type="submit" className="mt-6 w-full" disabled={loading}>
-          {loading ? 'Posting...' : 'Post Question'}
-        </Button>
-      </form>
-    </Card>
+      </div>
+    </div>
   );
 };
 
