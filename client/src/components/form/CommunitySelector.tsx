@@ -19,37 +19,34 @@ interface Community {
 }
 
 interface CommunitySelectorProps {
-  value?: Community;
-  onChange: (community: Community) => void;
+  communities: Community[];
+  value: Community | null;
+  onChange: (community: Community | null) => void;
   error?: boolean;
   className?: string;
+  required?: boolean;
+  locked?: boolean;
 }
 
-const mockCommunities: Community[] = [
-  { id: "1", name: "React Developers", description: "All things React and JSX", memberCount: 15420 },
-  { id: "2", name: "JavaScript Masters", description: "Modern JavaScript and ES6+", memberCount: 23100 },
-  { id: "3", name: "TypeScript Hub", description: "Type-safe development", memberCount: 12800 },
-  { id: "4", name: "CSS & Design", description: "Styling and UI/UX discussions", memberCount: 8900 },
-  { id: "5", name: "Node.js Backend", description: "Server-side JavaScript", memberCount: 11200 },
-  { id: "6", name: "Web Performance", description: "Optimization and best practices", memberCount: 6700 },
-];
-
 export const CommunitySelector: React.FC<CommunitySelectorProps> = ({
+  communities,
   value,
   onChange,
   error,
-  className
+  className,
+  required = false,
+  locked = false,
 }) => {
   const [open, setOpen] = useState(false);
   const [searchTerm, setSearchTerm] = useState("");
   const [shake, setShake] = useState(false);
 
-  const filteredCommunities = mockCommunities.filter(community =>
+  const filteredCommunities = communities.filter(community =>
     community.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    community.description.toLowerCase().includes(searchTerm.toLowerCase())
+    (community.description || '').toLowerCase().includes(searchTerm.toLowerCase())
   );
 
-  const handleSelect = (community: Community) => {
+  const handleSelect = (community: Community | null) => {
     onChange(community);
     setOpen(false);
     setSearchTerm("");
@@ -70,41 +67,41 @@ export const CommunitySelector: React.FC<CommunitySelectorProps> = ({
     <div className={cn("space-y-2", className)}>
       <label className="block text-sm font-semibold text-gray-900">
         Select Community
-        <span className="text-red-500 ml-1">*</span>
+        {required && <span className="text-red-500 ml-1">*</span>}
       </label>
-      
-      <DropdownMenu open={open} onOpenChange={setOpen}>
+      <DropdownMenu open={open} onOpenChange={locked ? undefined : setOpen}>
         <DropdownMenuTrigger asChild>
           <Button
             variant="outline"
             role="combobox"
             aria-expanded={open}
             aria-label="Select community"
-            aria-required="true"
+            aria-required={required}
             aria-invalid={error}
             className={cn(
               "w-full h-12 justify-between text-left font-normal",
               !value && "text-muted-foreground",
               error && "border-red-500 ring-1 ring-red-500",
-              shake && "animate-pulse"
+              shake && "animate-pulse",
+              locked && "opacity-60 cursor-not-allowed"
             )}
             style={{
               animation: shake ? "shake 0.4s ease-in-out" : undefined
             }}
+            disabled={locked}
           >
             {value ? (
               <div className="flex flex-col">
                 <span className="font-medium">{value.name}</span>
-                <span className="text-xs text-muted-foreground">{value.memberCount.toLocaleString()} members</span>
+                <span className="text-xs text-muted-foreground">{value.memberCount?.toLocaleString() || 0} members</span>
               </div>
             ) : (
-              "Choose a community"
+              "None (General)"
             )}
             <ChevronDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
           </Button>
         </DropdownMenuTrigger>
-        
-        <DropdownMenuContent 
+        <DropdownMenuContent
           className="w-full min-w-[400px] p-0 bg-white shadow-lg border border-gray-200"
           style={{
             animation: open ? "slideDownFade 0.3s ease-out" : undefined
@@ -118,22 +115,34 @@ export const CommunitySelector: React.FC<CommunitySelectorProps> = ({
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
                 className="pl-10"
+                disabled={locked}
               />
             </div>
           </div>
-          
           <div className="max-h-60 overflow-y-auto">
+            <DropdownMenuItem
+              key="none"
+              onSelect={() => handleSelect(null)}
+              className="p-3 cursor-pointer hover:bg-pulse-50 focus:bg-pulse-50"
+              disabled={locked}
+            >
+              <div className="flex flex-col space-y-1">
+                <div className="font-medium text-gray-900">None (General)</div>
+                <div className="text-xs text-gray-600">Post to the main/global feed</div>
+              </div>
+            </DropdownMenuItem>
             {filteredCommunities.map((community) => (
               <DropdownMenuItem
                 key={community.id}
                 onSelect={() => handleSelect(community)}
                 className="p-3 cursor-pointer hover:bg-pulse-50 focus:bg-pulse-50"
+                disabled={locked}
               >
                 <div className="flex flex-col space-y-1">
                   <div className="font-medium text-gray-900">{community.name}</div>
                   <div className="text-sm text-gray-600">{community.description}</div>
                   <div className="text-xs text-pulse-600 font-medium">
-                    {community.memberCount.toLocaleString()} members
+                    {community.memberCount?.toLocaleString() || 0} members
                   </div>
                 </div>
               </DropdownMenuItem>
@@ -146,7 +155,6 @@ export const CommunitySelector: React.FC<CommunitySelectorProps> = ({
           </div>
         </DropdownMenuContent>
       </DropdownMenu>
-      
       {error && (
         <p className="text-sm text-red-500 mt-1">
           Please select a community.

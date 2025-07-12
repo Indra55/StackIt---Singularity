@@ -6,7 +6,7 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { AuthProvider } from "@/contexts/AuthContext";
 import { SocketProvider } from "@/contexts/SocketContext";
-import { NotificationProvider } from "@/contexts/NotificationContext"; 
+import { NotificationProvider } from "@/contexts/NotificationContext";
 import Index from "./pages/Index";
 import Questions from "./pages/Questions";
 import AskQuestion from "./pages/AskQuestion";
@@ -23,6 +23,8 @@ import NotFound from "./pages/NotFound";
 import Notifications from "./pages/Notifications";
 import CommunityDiscussionThread from "./pages/CommunityDiscussionThread";
 import Communities from "./pages/Communities";
+import CreateCommunity from "./pages/CreateCommunity";
+import CommunityDetail from "./pages/CommunityDetail";
 import AdminDashboard from "./pages/admin/AdminDashboard";
 import AdminUsers from "./pages/admin/AdminUsers";
 import AdminUserDetail from "./pages/admin/AdminUserDetail";
@@ -55,6 +57,8 @@ const App = () => (
                 <Route path="/messages/community" element={<CommunityDiscussions />} />
                 <Route path="/messages/community/:id" element={<CommunityDiscussionThread />} />
                 <Route path="/communities" element={<Communities />} />
+                <Route path="/create-community" element={<CreateCommunity />} />
+                <Route path="/community/:slug" element={<CommunityDetail />} />
                 <Route path="/notifications" element={<Notifications />} />
                 <Route path="/settings" element={<UserSettings />} />
                 <Route path="/user/:username" element={<UserProfile />} />

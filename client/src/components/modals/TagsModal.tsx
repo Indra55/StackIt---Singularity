@@ -4,41 +4,46 @@ import { X, Search, Hash, TrendingUp, Users } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
+import { apiGet } from "@/lib/api";
 
 interface Tag {
   name: string;
   count: number;
-  color: string;
-  description: string;
-  category: string;
+  color?: string;
+  description?: string;
+  category?: string;
 }
 
 const TagsModal = ({ isOpen, onClose }: { isOpen: boolean; onClose: () => void }) => {
   const [searchTerm, setSearchTerm] = useState("");
   const [selectedCategory, setSelectedCategory] = useState("all");
+  const [tags, setTags] = useState<Tag[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
-  const allTags: Tag[] = [
-    { name: "React", count: 1245, color: "bg-blue-100 text-blue-700", description: "A JavaScript library for building user interfaces", category: "frontend" },
-    { name: "JavaScript", count: 2156, color: "bg-yellow-100 text-yellow-700", description: "Programming language for web development", category: "language" },
-    { name: "TypeScript", count: 987, color: "bg-blue-100 text-blue-700", description: "Typed superset of JavaScript", category: "language" },
-    { name: "Node.js", count: 765, color: "bg-green-100 text-green-700", description: "JavaScript runtime for server-side development", category: "backend" },
-    { name: "Python", count: 1432, color: "bg-green-100 text-green-700", description: "High-level programming language", category: "language" },
-    { name: "CSS", count: 654, color: "bg-purple-100 text-purple-700", description: "Styling language for web pages", category: "frontend" },
-    { name: "HTML", count: 432, color: "bg-orange-100 text-orange-700", description: "Markup language for web pages", category: "frontend" },
-    { name: "Vue.js", count: 321, color: "bg-green-100 text-green-700", description: "Progressive JavaScript framework", category: "frontend" },
-    { name: "Angular", count: 298, color: "bg-red-100 text-red-700", description: "Platform for building web applications", category: "frontend" },
-    { name: "Django", count: 456, color: "bg-green-100 text-green-700", description: "High-level Python web framework", category: "backend" },
-    { name: "Flask", count: 234, color: "bg-gray-100 text-gray-700", description: "Lightweight Python web framework", category: "backend" },
-    { name: "Express.js", count: 567, color: "bg-gray-100 text-gray-700", description: "Web application framework for Node.js", category: "backend" },
-    { name: "MongoDB", count: 345, color: "bg-green-100 text-green-700", description: "NoSQL database", category: "database" },
-    { name: "PostgreSQL", count: 289, color: "bg-blue-100 text-blue-700", description: "Object-relational database", category: "database" },
-    { name: "Docker", count: 412, color: "bg-blue-100 text-blue-700", description: "Containerization platform", category: "devops" },
-    { name: "Kubernetes", count: 198, color: "bg-blue-100 text-blue-700", description: "Container orchestration platform", category: "devops" },
-    { name: "AWS", count: 523, color: "bg-orange-100 text-orange-700", description: "Cloud computing platform", category: "cloud" },
-    { name: "Git", count: 876, color: "bg-orange-100 text-orange-700", description: "Version control system", category: "tools" },
-    { name: "Webpack", count: 234, color: "bg-blue-100 text-blue-700", description: "Module bundler", category: "tools" },
-    { name: "Vite", count: 156, color: "bg-purple-100 text-purple-700", description: "Build tool and dev server", category: "tools" }
-  ];
+  useEffect(() => {
+    if (!isOpen) return;
+    setLoading(true);
+    setError(null);
+    apiGet("/tags")
+      .then((data) => {
+        if (data.status === "success" && Array.isArray(data.tags)) {
+          setTags(
+            data.tags.map((t: any) => ({
+              name: t.tag,
+              count: parseInt(t.count, 10),
+              color: "bg-blue-100 text-blue-700", // Default color
+              description: undefined,
+              category: undefined,
+            }))
+          );
+        } else {
+          setError("Failed to load tags");
+        }
+      })
+      .catch(() => setError("Failed to load tags"))
+      .finally(() => setLoading(false));
+  }, [isOpen]);
 
   const categories = [
     { id: "all", name: "All Tags", icon: Hash },
@@ -51,9 +56,9 @@ const TagsModal = ({ isOpen, onClose }: { isOpen: boolean; onClose: () => void }
     { id: "tools", name: "Tools", icon: Hash }
   ];
 
-  const filteredTags = allTags.filter(tag => {
+  const filteredTags = tags.filter(tag => {
     const matchesSearch = tag.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                         tag.description.toLowerCase().includes(searchTerm.toLowerCase());
+                         (tag.description || "").toLowerCase().includes(searchTerm.toLowerCase());
     const matchesCategory = selectedCategory === "all" || tag.category === selectedCategory;
     return matchesSearch && matchesCategory;
   });
@@ -91,7 +96,6 @@ const TagsModal = ({ isOpen, onClose }: { isOpen: boolean; onClose: () => void }
             <X className="h-5 w-5" />
           </Button>
         </div>
-
         {/* Search and Filters */}
         <div className="p-6 border-b border-gray-200">
           <div className="flex gap-4 mb-4">
@@ -105,7 +109,6 @@ const TagsModal = ({ isOpen, onClose }: { isOpen: boolean; onClose: () => void }
               />
             </div>
           </div>
-
           {/* Category Filters */}
           <div className="flex flex-wrap gap-2">
             {categories.map((category) => {
@@ -125,31 +128,35 @@ const TagsModal = ({ isOpen, onClose }: { isOpen: boolean; onClose: () => void }
             })}
           </div>
         </div>
-
         {/* Tags Grid */}
         <div className="p-6 overflow-y-auto max-h-[60vh]">
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-            {sortedTags.map((tag) => (
-              <div
-                key={tag.name}
-                className="bg-gray-50 rounded-xl p-4 hover:bg-gray-100 transition-colors cursor-pointer border border-gray-200"
-              >
-                <div className="flex items-center justify-between mb-2">
-                  <Badge className={`${tag.color} border-0`}>
-                    {tag.name}
-                  </Badge>
-                  <span className="text-sm text-gray-500 font-medium">
-                    {tag.count.toLocaleString()}
-                  </span>
+          {loading ? (
+            <div className="text-center py-12 text-lg text-gray-500">Loading tags...</div>
+          ) : error ? (
+            <div className="text-center py-12 text-lg text-red-500">{error}</div>
+          ) : (
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+              {sortedTags.map((tag) => (
+                <div
+                  key={tag.name}
+                  className="bg-gray-50 rounded-xl p-4 hover:bg-gray-100 transition-colors cursor-pointer border border-gray-200"
+                >
+                  <div className="flex items-center justify-between mb-2">
+                    <Badge className={`${tag.color} border-0`}>
+                      {tag.name}
+                    </Badge>
+                    <span className="text-sm text-gray-500 font-medium">
+                      {tag.count.toLocaleString()}
+                    </span>
+                  </div>
+                  <p className="text-sm text-gray-600 line-clamp-2">
+                    {tag.description || ''}
+                  </p>
                 </div>
-                <p className="text-sm text-gray-600 line-clamp-2">
-                  {tag.description}
-                </p>
-              </div>
-            ))}
-          </div>
-
-          {sortedTags.length === 0 && (
+              ))}
+            </div>
+          )}
+          {sortedTags.length === 0 && !loading && !error && (
             <div className="text-center py-12">
               <Hash className="h-12 w-12 text-gray-400 mx-auto mb-4" />
               <h3 className="text-lg font-medium text-gray-900 mb-2">No tags found</h3>
@@ -157,12 +164,11 @@ const TagsModal = ({ isOpen, onClose }: { isOpen: boolean; onClose: () => void }
             </div>
           )}
         </div>
-
         {/* Footer */}
         <div className="p-6 border-t border-gray-200 bg-gray-50">
           <div className="flex items-center justify-between">
             <p className="text-sm text-gray-600">
-              Showing {sortedTags.length} of {allTags.length} tags
+              Showing {sortedTags.length} of {tags.length} tags
             </p>
             <Button onClick={onClose} className="bg-pulse-600 hover:bg-pulse-700">
               Close

@@ -5,7 +5,7 @@ import TagsModal from "@/components/modals/TagsModal";
 import CommunitiesModal from "@/components/modals/CommunitiesModal";
 
 const LeftSidebar = () => {
-  const [joinedCommunities, setJoinedCommunities] = useState<string[]>(["Web Dev"]);
+  const [joinedCommunities, setJoinedCommunities] = useState<string[]>(["React Developers"]);
   const [isTagsModalOpen, setIsTagsModalOpen] = useState(false);
   const [isCommunitiesModalOpen, setIsCommunitiesModalOpen] = useState(false);
 
@@ -21,12 +21,12 @@ const LeftSidebar = () => {
   ];
 
   const communities = [
-    { name: "Web Dev", members: 15420, isJoined: true },
-    { name: "AI & ML", members: 8934, isJoined: false },
-    { name: "Mobile Dev", members: 6743, isJoined: false },
-    { name: "DevOps", members: 4521, isJoined: false },
-    { name: "UI/UX", members: 3876, isJoined: false },
-    { name: "Backend", members: 7654, isJoined: false }
+    { name: "React Developers", members: 15420, isJoined: true },
+    { name: "Python & AI", members: 8934, isJoined: false },
+    { name: "DevOps Masters", members: 6743, isJoined: false },
+    { name: "UI/UX Design Hub", members: 4521, isJoined: false },
+    { name: "Blockchain Innovators", members: 3276, isJoined: false },
+    { name: "Mobile Dev", members: 6743, isJoined: false }
   ];
 
   const toggleCommunity = (communityName: string) => {

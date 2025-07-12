@@ -112,37 +112,19 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   };
 
   const signup = async (userData: SignupData) => {
-    // Real signup implementation
-    const formData = new FormData();
-    formData.append('username', userData.username);
-    formData.append('email', userData.email);
-    formData.append('password', userData.password);
-    if (userData.firstName) formData.append('first_name', userData.firstName);
-    if (userData.lastName) formData.append('last_name', userData.lastName);
-    if (userData.avatarFile) formData.append('avatar', userData.avatarFile);
-    // Communities are not handled in backend registration, so skip for now
-
-    // Use JSON if no avatar, otherwise use FormData
-    let response, data;
-    if (userData.avatarFile) {
-      response = await fetch(`${BACKEND_URL}/users/register`, {
-        method: 'POST',
-        body: formData
-      });
-    } else {
-      response = await fetch(`${BACKEND_URL}/users/register`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          username: userData.username,
-          email: userData.email,
-          password: userData.password,
-          first_name: userData.firstName,
-          last_name: userData.lastName
-        })
-      });
-    }
-    data = await response.json();
+    // Always send JSON for registration
+    const response = await fetch(`${BACKEND_URL}/users/register`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        username: userData.username,
+        email: userData.email,
+        password: userData.password,
+        first_name: userData.firstName,
+        last_name: userData.lastName
+      })
+    });
+    const data = await response.json();
     if (!response.ok || data.status !== 'success') {
       throw new Error(data.message || 'Signup failed');
     }
@@ -154,17 +136,27 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       isAuthenticated: true,
       isLoading: false
     });
-    // If avatarFile was provided, upload avatar after registration
+    // Upload avatar after registration if present
     if (userData.avatarFile) {
       const token = data.token;
       const avatarForm = new FormData();
       avatarForm.append('avatar', userData.avatarFile);
-      await fetch(`${BACKEND_URL}/api/uploads/avatar`, {
+      const avatarRes = await fetch(`${BACKEND_URL}/api/uploads/avatar`, {
         method: 'POST',
         headers: { 'Authorization': `Bearer ${token}` },
         body: avatarForm
       });
-      // Optionally, update user state with new avatar URL
+      const avatarData = await avatarRes.json();
+      if (avatarData.status === 'success' && avatarData.avatar_url) {
+        // Update user in storage and state
+        const updatedUser = { ...data.user, avatarUrl: avatarData.avatar_url, createdAt: data.user.created_at };
+        localStorage.setItem('stackit_user', JSON.stringify(updatedUser));
+        setAuthState({
+          user: { ...updatedUser, createdAt: new Date(updatedUser.createdAt) },
+          isAuthenticated: true,
+          isLoading: false
+        });
+      }
     }
   };
 

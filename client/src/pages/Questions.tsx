@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import PlatformNavbar from "@/components/navigation/PlatformNavbar";
 import QuestionCard from "@/components/platform/QuestionCard";
 import { QuestionActions } from "@/components/platform/QuestionActions";
@@ -8,101 +8,55 @@ import { Pagination, PaginationContent, PaginationItem, PaginationLink, Paginati
 import { Button } from "@/components/ui/button";
 import { MessageSquare, Users } from "lucide-react";
 import { useNavigate } from "react-router-dom";
-
-// Mock data for questions
-const mockQuestions = [
-  {
-    id: 1,
-    title: "How do I integrate JWT authentication in React?",
-    description: "I'm building a React application and need to implement JWT authentication. What's the best approach for handling tokens securely?",
-    author: {
-      id: 1,
-      username: "pranav_d",
-      avatar: "/placeholder-avatar.jpg",
-      reputation: 1520
-    },
-    tags: ["React", "JWT", "Authentication", "Security"],
-    votes: 15,
-    answers: 3,
-    views: 128,
-    createdAt: new Date(Date.now() - 2 * 60 * 60 * 1000), // 2 hours ago
-    hasAcceptedAnswer: true
-  },
-  {
-    id: 2,
-    title: "Best practices for TypeScript with React hooks?",
-    description: "I'm new to TypeScript and wondering about the best practices when using it with React hooks like useState and useEffect.",
-    author: {
-      id: 2,
-      username: "sarah_dev",
-      avatar: "/placeholder-avatar.jpg",
-      reputation: 890
-    },
-    tags: ["TypeScript", "React", "Hooks"],
-    votes: 8,
-    answers: 0,
-    views: 45,
-    createdAt: new Date(Date.now() - 4 * 60 * 60 * 1000), // 4 hours ago
-    hasAcceptedAnswer: false
-  },
-  {
-    id: 3,
-    title: "How to optimize React component re-renders?",
-    description: "My React app is experiencing performance issues due to unnecessary re-renders. What are the best strategies to optimize this?",
-    author: {
-      id: 3,
-      username: "alex_code",
-      avatar: "/placeholder-avatar.jpg",
-      reputation: 2340
-    },
-    tags: ["React", "Performance", "Optimization"],
-    votes: 23,
-    answers: 5,
-    views: 234,
-    createdAt: new Date(Date.now() - 6 * 60 * 60 * 1000), // 6 hours ago
-    hasAcceptedAnswer: true
-  },
-  {
-    id: 4,
-    title: "Setting up ESLint and Prettier in a new project",
-    description: "What's the recommended configuration for ESLint and Prettier in a modern JavaScript/TypeScript project?",
-    author: {
-      id: 4,
-      username: "mike_lint",
-      avatar: "/placeholder-avatar.jpg",
-      reputation: 567
-    },
-    tags: ["ESLint", "Prettier", "Configuration", "JavaScript"],
-    votes: 12,
-    answers: 2,
-    views: 89,
-    createdAt: new Date(Date.now() - 8 * 60 * 60 * 1000), // 8 hours ago
-    hasAcceptedAnswer: false
-  },
-  {
-    id: 5,
-    title: "Understanding async/await vs Promises in JavaScript",
-    description: "Can someone explain the differences between async/await and traditional Promise chains? When should I use each approach?",
-    author: {
-      id: 5,
-      username: "emma_async",
-      avatar: "/placeholder-avatar.jpg",
-      reputation: 1100
-    },
-    tags: ["JavaScript", "Async", "Promises", "ES6"],
-    votes: 19,
-    answers: 4,
-    views: 156,
-    createdAt: new Date(Date.now() - 12 * 60 * 60 * 1000), // 12 hours ago
-    hasAcceptedAnswer: true
-  }
-];
+import { Breadcrumb, BreadcrumbList, BreadcrumbItem, BreadcrumbLink, BreadcrumbPage, BreadcrumbSeparator } from '@/components/ui/breadcrumb';
 
 const Questions = () => {
   const [currentPage, setCurrentPage] = useState(1);
-  const [questions] = useState(mockQuestions);
+  const [questions, setQuestions] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
   const navigate = useNavigate();
   const questionsPerPage = 10;
+
+  useEffect(() => {
+    const fetchQuestions = async () => {
+      setLoading(true);
+      setError(null);
+      try {
+        const res = await fetch("http://localhost:3100/posts");
+        const data = await res.json();
+        if (data.status === "success" && Array.isArray(data.posts)) {
+          // Map backend data to QuestionCard props
+          setQuestions(
+            data.posts.map((q: any) => ({
+              id: q.id,
+              title: q.title,
+              description: q.content,
+              author: {
+                id: q.user_id,
+                username: q.username,
+                avatar: "/placeholder-avatar.jpg", // No avatar in backend response
+                reputation: 0 // No reputation in backend response
+              },
+              tags: q.tags || [],
+              votes: (q.upvotes || 0) - (q.downvotes || 0),
+              answers: q.answer_count || 0,
+              views: q.view_count || 0,
+              createdAt: new Date(q.created),
+              hasAcceptedAnswer: q.is_answered || false
+            }))
+          );
+        } else {
+          setError("Failed to load questions");
+        }
+      } catch (err: any) {
+        setError("Failed to load questions");
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchQuestions();
+  }, []);
 
   const totalPages = Math.ceil(questions.length / questionsPerPage);
   const startIndex = (currentPage - 1) * questionsPerPage;
@@ -112,6 +66,20 @@ const Questions = () => {
     <div className="min-h-screen bg-gradient-to-br from-gray-50 via-white to-pulse-50/30">
       <PlatformNavbar />
       
+      <div className="container mx-auto px-6 py-4">
+        <Breadcrumb>
+          <BreadcrumbList>
+            <BreadcrumbItem>
+              <BreadcrumbLink href="/">Home</BreadcrumbLink>
+            </BreadcrumbItem>
+            <BreadcrumbSeparator />
+            <BreadcrumbItem>
+              <BreadcrumbPage>Questions</BreadcrumbPage>
+            </BreadcrumbItem>
+          </BreadcrumbList>
+        </Breadcrumb>
+      </div>
+
       <div className="container mx-auto px-6 py-8">
         <div className="flex gap-8">
           {/* Left Sidebar - Enhanced spacing */}
@@ -137,7 +105,7 @@ const Questions = () => {
                   </div>
                   <div className="text-right">
                     <div className="text-2xl font-bold text-pulse-600">
-                      {questions.length.toLocaleString()}
+                      {loading ? "..." : questions.length.toLocaleString()}
                     </div>
                     <div className="text-sm text-gray-500">questions</div>
                   </div>
@@ -183,22 +151,29 @@ const Questions = () => {
 
               {/* Enhanced Question Cards with better spacing */}
               <div className="space-y-6">
-                {currentQuestions.map((question, index) => (
-                  <div 
-                    key={question.id}
-                    className="opacity-0 animate-fade-in bg-white rounded-2xl shadow-lg border border-border overflow-hidden"
-                    style={{ animationDelay: `${index * 0.1}s` }}
-                  >
-                    <div className="p-6">
-                      <QuestionCard question={question} />
-                      {/* Removed QuestionActions */}
+                {loading ? (
+                  <div className="text-center py-12 text-lg text-gray-500">Loading questions...</div>
+                ) : error ? (
+                  <div className="text-center py-12 text-lg text-red-500">{error}</div>
+                ) : currentQuestions.length === 0 ? (
+                  <div className="text-center py-12 text-lg text-gray-500">No questions found.</div>
+                ) : (
+                  currentQuestions.map((question, index) => (
+                    <div 
+                      key={question.id}
+                      className="opacity-0 animate-fade-in bg-white rounded-2xl shadow-lg border border-border overflow-hidden"
+                      style={{ animationDelay: `${index * 0.1}s` }}
+                    >
+                      <div className="p-6">
+                        <QuestionCard question={question} />
+                      </div>
                     </div>
-                  </div>
-                ))}
+                  ))
+                )}
               </div>
 
               {/* Enhanced Pagination */}
-              {totalPages > 1 && (
+              {totalPages > 1 && !loading && !error && (
                 <div className="mt-12 flex justify-center">
                   <div className="bg-white rounded-2xl shadow-lg border border-border p-6">
                     <Pagination>
