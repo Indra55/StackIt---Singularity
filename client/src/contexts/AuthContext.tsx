@@ -26,6 +26,7 @@ export interface AuthContextType extends AuthState {
   signup: (userData: SignupData) => Promise<void>;
   logout: () => void;
   updateUser: (updates: Partial<User>) => void;
+  token?: string;
 }
 
 export interface SignupData {
@@ -188,7 +189,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     login,
     signup,
     logout,
-    updateUser
+    updateUser,
+    token: localStorage.getItem('stackit_token') || sessionStorage.getItem('stackit_token') || undefined
   };
 
   return (
