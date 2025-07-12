@@ -2,6 +2,7 @@ const express = require("express");
 const router = express.Router();
 const pool = require("../config/dbConfig");
 const { authenticateToken, requireAuth } = require("../middleware/auth");
+const { processMentions } = require("./mentionRoutes");
 
 // Get all posts
 router.get("/posts", async (req, res) => {
@@ -200,11 +201,20 @@ router.post("/posts/create", authenticateToken, requireAuth, async (req, res) =>
     `;
 
     const result = await pool.query(query, [title, content, userID, processedTags, communityId]);
+    const postId = result.rows[0].id;
+
+    // Process mentions in the post
+    const mentionResult = await processMentions({
+        postId: postId,
+        mentionerUserId: userID,
+        content
+    });
 
     res.json({
       message: "Post created successfully",
       status: "success",
-      post: result.rows[0]
+      post: result.rows[0],
+      mentions: mentionResult.mentions || []
     });
   } catch (err) {
     console.error(err);
@@ -319,13 +329,23 @@ router.post("/posts/:id/comment", authenticateToken, requireAuth, async (req, re
     `;
     
     const result = await pool.query(query, [postID, userID, content]);
+    const commentId = result.rows[0].id;
+
+    // Process mentions in the comment
+    const mentionResult = await processMentions({
+        postId: postID,
+        commentId: commentId,
+        mentionerUserId: userID,
+        content
+    });
 
     // Note: answer_count is automatically updated by the database trigger
 
     res.json({
       message: "Comment added successfully",
       status: "success",
-      comment: result.rows[0]
+      comment: result.rows[0],
+      mentions: mentionResult.mentions || []
     });
   } catch (err) {
     console.error(err);
@@ -568,13 +588,13 @@ router.post("/comments/:id/downvote", authenticateToken, requireAuth, async (req
       comment: updatedComment.rows[0]
     });
   } catch (err) {
-    console.error(err);
+            console.error(err);
     res.status(500).json({
       message: "Cannot downvote comment",
-      status: "error",
-      error: err.message
-    });
-  }
+              status: "error",
+              error: err.message
+            });
+        }
 });
 
 // Update post status
@@ -584,7 +604,7 @@ router.put("/posts/:id/status", authenticateToken, requireAuth, async (req, res)
   const userId = req.user.id;
 
   if (!status || !['open', 'closed', 'duplicate', 'off-topic'].includes(status)) {
-    return res.status(400).json({
+      return res.status(400).json({
       message: "Invalid status. Must be one of: open, closed, duplicate, off-topic",
       status: "error"
     });
@@ -614,13 +634,13 @@ router.put("/posts/:id/status", authenticateToken, requireAuth, async (req, res)
       status: "success"
     });
   } catch (err) {
-    console.error(err);
+            console.error(err);
     res.status(500).json({
       message: "Cannot update post status",
-      status: "error",
-      error: err.message
-    });
-  }
+              status: "error",
+              error: err.message
+            });
+        }
 });
 
 module.exports = router;
