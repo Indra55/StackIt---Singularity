@@ -286,9 +286,23 @@ router.post("/posts/create", authenticateToken, requireAuth, async (req, res) =>
 });
 
 // Get a specific post with comments
-router.get("/posts/:id", authenticateToken, requireAuth, async (req, res) => {
+router.get("/posts/:id", async (req, res) => {
   const postId = req.params.id;
-  const userId = req.user.id;  
+  let userId = null;
+
+  // Try to get userId from Authorization header if present
+  const authHeader = req.headers['authorization'];
+  if (authHeader && authHeader.startsWith('Bearer ')) {
+    try {
+      const token = authHeader.split(' ')[1];
+      const jwt = require('../config/jwtConfig');
+      const decoded = jwt.verifyToken(token);
+      userId = decoded.id;
+    } catch (e) {
+      // Invalid token, treat as not logged in
+      userId = null;
+    }
+  }
 
   try {
     // Increment view count
@@ -310,14 +324,16 @@ router.get("/posts/:id", authenticateToken, requireAuth, async (req, res) => {
     const postResult = await pool.query(postQuery, [postId]);
     const commentsResult = await pool.query(commentQuery, [postId]);
 
-    const voteQuery = `
-      SELECT vote_type
-      FROM post_votes
-      WHERE post_id = $1 AND user_id = $2
-    `;
-    const voteResult = await pool.query(voteQuery, [postId, userId]);
-
-    const userVote = voteResult.rows.length > 0 ? voteResult.rows[0].vote_type : null;
+    let userVote = null;
+    if (userId) {
+      const voteQuery = `
+        SELECT vote_type
+        FROM post_votes
+        WHERE post_id = $1 AND user_id = $2
+      `;
+      const voteResult = await pool.query(voteQuery, [postId, userId]);
+      userVote = voteResult.rows.length > 0 ? voteResult.rows[0].vote_type : null;
+    }
 
     res.json({
       message: "Post retrieved successfully",
