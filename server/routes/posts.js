@@ -2,6 +2,7 @@ const express = require("express");
 const router = express.Router();
 const pool = require("../config/dbConfig");
 const { authenticateToken, requireAuth } = require("../middleware/auth");
+const { createNotification } = require("./notifications");
 const { processMentions } = require("./mentionRoutes");
 
 // Get all posts
@@ -210,6 +211,64 @@ router.post("/posts/create", authenticateToken, requireAuth, async (req, res) =>
         content
     });
 
+    // If post is in a community, notify community members about new post
+    if (communityId) {
+      try {
+        // Get community members (excluding the post author)
+        const membersQuery = `
+          SELECT cm.user_id, u.username
+          FROM community_members cm
+          JOIN users u ON cm.user_id = u.id
+          WHERE cm.community_id = $1 AND cm.user_id != $2
+        `;
+        const membersResult = await pool.query(membersQuery, [communityId, userID]);
+        
+        // Notify each community member
+        for (const member of membersResult.rows) {
+          try {
+            await createNotification({
+              user_id: member.user_id,
+              type: 'comment', // Using 'comment' type for community posts
+              title: 'New Community Post',
+              message: `${req.user.username} posted "${title}" in the community`,
+              related_id: result.rows[0].id,
+              related_type: 'post'
+            });
+          } catch (notifErr) {
+            console.error('Failed to create community post notification:', notifErr);
+          }
+        }
+      } catch (err) {
+        console.error('Failed to notify community members:', err);
+      }
+    }
+
+    // Check for @mentions in post content
+    const mentions = content.match(/@(\w+)/g);
+    if (mentions) {
+      for (const mention of mentions) {
+        const username = mention.substring(1);
+        if (username !== req.user.username) { // Don't mention yourself
+          const userQuery = "SELECT id FROM users WHERE username = $1";
+          const userResult = await pool.query(userQuery, [username]);
+          if (userResult.rows.length > 0) {
+            try {
+              await createNotification({
+                user_id: userResult.rows[0].id,
+                type: 'mention',
+                title: 'You were mentioned',
+                message: `${req.user.username} mentioned you in a post "${title}"`,
+                related_id: result.rows[0].id,
+                related_type: 'post'
+              });
+            } catch (notifErr) {
+              console.error('Failed to create mention notification:', notifErr);
+            }
+          }
+        }
+      }
+    }
+
     res.json({
       message: "Post created successfully",
       status: "success",
@@ -376,6 +435,58 @@ router.post("/posts/:id/comment", authenticateToken, requireAuth, async (req, re
 
     // Note: answer_count is automatically updated by the database trigger
 
+    // Get post details for notification
+    const postDetailsQuery = `
+      SELECT p.title, p.user_id, u.username as post_owner_username
+      FROM posts p
+      JOIN users u ON p.user_id = u.id
+      WHERE p.id = $1
+    `;
+    const postDetailsResult = await pool.query(postDetailsQuery, [postID]);
+    const postDetails = postDetailsResult.rows[0];
+
+    // Notify post owner about new comment (if not commenting on own post)
+    if (postDetails.user_id !== userID) {
+      try {
+        await createNotification({
+          user_id: postDetails.user_id,
+          type: 'comment',
+          title: 'New Comment',
+          message: `${req.user.username} commented on your post "${postDetails.title}"`,
+          related_id: postID,
+          related_type: 'post'
+        });
+      } catch (notifErr) {
+        console.error('Failed to create comment notification:', notifErr);
+      }
+    }
+
+    // Check for @mentions in comment content
+    const mentions = content.match(/@(\w+)/g);
+    if (mentions) {
+      for (const mention of mentions) {
+        const username = mention.substring(1);
+        if (username !== req.user.username) { // Don't mention yourself
+          const userQuery = "SELECT id FROM users WHERE username = $1";
+          const userResult = await pool.query(userQuery, [username]);
+          if (userResult.rows.length > 0) {
+            try {
+              await createNotification({
+                user_id: userResult.rows[0].id,
+                type: 'mention',
+                title: 'You were mentioned',
+                message: `${req.user.username} mentioned you in a comment on "${postDetails.title}"`,
+                related_id: postID,
+                related_type: 'post'
+              });
+            } catch (notifErr) {
+              console.error('Failed to create mention notification:', notifErr);
+            }
+          }
+        }
+      }
+    }
+
     res.json({
       message: "Comment added successfully",
       status: "success",
@@ -424,11 +535,37 @@ router.post("/posts/:postId/accept-answer/:commentId", authenticateToken, requir
       });
     }
 
+    // Get comment details for notification
+    const commentQuery = `
+      SELECT c.user_id, u.username as comment_owner_username
+      FROM comments c
+      JOIN users u ON c.user_id = u.id
+      WHERE c.id = $1
+    `;
+    const commentResult = await pool.query(commentQuery, [commentId]);
+    const comment = commentResult.rows[0];
+
     // Update the comment as accepted
     await pool.query("UPDATE comments SET is_accepted = true WHERE id = $1", [commentId]);
 
     // Update the post as answered
     await pool.query("UPDATE posts SET is_answered = true, accepted_answer_id = $1 WHERE id = $2", [commentId, postId]);
+
+    // Notify comment owner that their answer was accepted
+    if (comment.user_id !== userId) {
+      try {
+        await createNotification({
+          user_id: comment.user_id,
+          type: 'answer',
+          title: 'Answer Accepted',
+          message: `${req.user.username} accepted your answer`,
+          related_id: postId,
+          related_type: 'post'
+        });
+      } catch (notifErr) {
+        console.error('Failed to create answer acceptance notification:', notifErr);
+      }
+    }
 
     res.json({
       message: "Answer accepted successfully",
@@ -470,11 +607,28 @@ router.post("/posts/:id/upvote", authenticateToken, requireAuth, async (req, res
       }
     }
 
-    // Get updated post data
+    // Get updated post data and post owner info
     const updatedPost = await pool.query(
       "SELECT posts.*, users.username FROM posts JOIN users ON posts.user_id = users.id WHERE posts.id = $1",
       [postID]
     );
+
+    // Notify post owner about upvote (if not voting on own post)
+    const postOwnerId = updatedPost.rows[0].user_id;
+    if (postOwnerId !== userID) {
+      try {
+        await createNotification({
+          user_id: postOwnerId,
+          type: 'vote',
+          title: 'New Upvote',
+          message: `${req.user.username} upvoted your post "${updatedPost.rows[0].title}"`,
+          related_id: postID,
+          related_type: 'post'
+        });
+      } catch (notifErr) {
+        console.error('Failed to create upvote notification:', notifErr);
+      }
+    }
 
     res.json({
       message: "Upvote successful",
@@ -564,11 +718,28 @@ router.post("/comments/:id/upvote", authenticateToken, requireAuth, async (req, 
       }
     }
 
-    // Get updated comment data
+    // Get updated comment data and comment owner info
     const updatedComment = await pool.query(
       "SELECT comments.*, users.username FROM comments JOIN users ON comments.user_id = users.id WHERE comments.id = $1",
       [commentID]
     );
+
+    // Notify comment owner about upvote (if not voting on own comment)
+    const commentOwnerId = updatedComment.rows[0].user_id;
+    if (commentOwnerId !== userID) {
+      try {
+        await createNotification({
+          user_id: commentOwnerId,
+          type: 'vote',
+          title: 'New Upvote',
+          message: `${req.user.username} upvoted your comment`,
+          related_id: commentID,
+          related_type: 'comment'
+        });
+      } catch (notifErr) {
+        console.error('Failed to create comment upvote notification:', notifErr);
+      }
+    }
 
     res.json({
       message: "Comment upvote successful",
@@ -623,13 +794,13 @@ router.post("/comments/:id/downvote", authenticateToken, requireAuth, async (req
       comment: updatedComment.rows[0]
     });
   } catch (err) {
-            console.error(err);
+    console.error(err);
     res.status(500).json({
       message: "Cannot downvote comment",
-              status: "error",
-              error: err.message
-            });
-        }
+      status: "error",
+      error: err.message
+    });
+  }
 });
 
 // Update post status
@@ -638,8 +809,8 @@ router.put("/posts/:id/status", authenticateToken, requireAuth, async (req, res)
   const { status } = req.body;
   const userId = req.user.id;
 
-  if (!status || !['open', 'closed', 'duplicate', 'off-topic'].includes(status)) {
-      return res.status(400).json({
+    if (!status || !['open', 'closed', 'duplicate', 'off-topic'].includes(status)) {
+    return res.status(400).json({
       message: "Invalid status. Must be one of: open, closed, duplicate, off-topic",
       status: "error"
     });
@@ -669,13 +840,13 @@ router.put("/posts/:id/status", authenticateToken, requireAuth, async (req, res)
       status: "success"
     });
   } catch (err) {
-            console.error(err);
+    console.error(err);
     res.status(500).json({
       message: "Cannot update post status",
-              status: "error",
-              error: err.message
-            });
-        }
+      status: "error",
+      error: err.message
+    });
+  }
 });
 
 module.exports = router;

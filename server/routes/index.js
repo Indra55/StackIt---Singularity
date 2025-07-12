@@ -47,6 +47,14 @@ router.get("/",(req,res)=>{
                     getBans: "GET /api/communities/:name/bans",
                     getModLog: "GET /api/communities/:name/moderation-log"
                 }
+            },
+            search: {
+                all: "GET /api/search?q=query&type=all",
+                posts: "GET /api/search/posts?q=query&sort=relevance&limit=10&offset=0",
+                comments: "GET /api/search/comments?q=query&sort=newest&limit=10&offset=0",
+                users: "GET /api/search/users?q=query&sort=relevance&limit=10&offset=0",
+                tags: "GET /api/search/tags?q=query&sort=usage&limit=10&offset=0",
+                advanced: "GET /api/search/advanced?q=query&type=posts&tags=tag1,tag2&author=username&dateFrom=2024-01-01&dateTo=2024-12-31&hasAnswers=true&isAnswered=true"
             }
         }
     })

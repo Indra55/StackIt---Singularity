@@ -5,7 +5,7 @@ const { authenticateToken, requireAuth } = require('../middleware/auth');
 
 // Utility: Create a notification
 async function createNotification({ user_id, type, title, message, related_id, related_type }) {
-  const allowedTypes = ['mention', 'answer', 'vote', 'comment', 'chat']; // Now allow 'chat' as well
+  const allowedTypes = ['mention', 'answer', 'vote', 'comment', 'chat', 'admin']; // Now allow 'admin' as well
   if (!allowedTypes.includes(type)) {
     console.log('[DEBUG] Invalid notification type:', type);
     throw new Error('Invalid notification type: ' + type);

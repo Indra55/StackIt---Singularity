@@ -35,6 +35,7 @@ app.use("/api/uploads", require("./routes/uploads"))
 app.use("/api/communities", require("./routes/communities"))
 app.use("/api/admin", require("./routes/admin"))
 app.use('/api/mentions', require('./routes/mentionRoutes'))
+app.use('/api/search', require('./routes/search'))
 
 // Map userId to socketId(s)
 const userSocketMap = new Map();

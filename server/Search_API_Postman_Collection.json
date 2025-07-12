@@ -1,0 +1,725 @@
+{
+  "info": {
+    "name": "Search API Collection",
+    "description": "Comprehensive collection for testing the Search API endpoints",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "item": [
+    {
+      "name": "General Search",
+      "item": [
+        {
+          "name": "Search All Content Types",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "http://localhost:3100/api/search?q=nodejs&limit=5&offset=0",
+              "protocol": "http",
+              "host": ["localhost"],
+              "port": "3100",
+              "path": ["api", "search"],
+              "query": [
+                {
+                  "key": "q",
+                  "value": "nodejs",
+                  "description": "Search query"
+                },
+                {
+                  "key": "limit",
+                  "value": "5",
+                  "description": "Number of results per content type"
+                },
+                {
+                  "key": "offset",
+                  "value": "0",
+                  "description": "Number of results to skip"
+                }
+              ]
+            },
+            "description": "Search across all content types (posts, comments, users, tags)"
+          }
+        }
+      ]
+    },
+    {
+      "name": "Posts Search",
+      "item": [
+        {
+          "name": "Search Posts - Relevance",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "http://localhost:3100/api/search/posts?q=postgresql&sort=relevance&limit=10&offset=0",
+              "protocol": "http",
+              "host": ["localhost"],
+              "port": "3100",
+              "path": ["api", "search", "posts"],
+              "query": [
+                {
+                  "key": "q",
+                  "value": "postgresql",
+                  "description": "Search query"
+                },
+                {
+                  "key": "sort",
+                  "value": "relevance",
+                  "description": "Sort order: relevance, votes, views, answers, oldest, newest"
+                },
+                {
+                  "key": "limit",
+                  "value": "10",
+                  "description": "Number of results per page"
+                },
+                {
+                  "key": "offset",
+                  "value": "0",
+                  "description": "Number of results to skip"
+                }
+              ]
+            },
+            "description": "Search posts sorted by relevance (most recent first)"
+          }
+        },
+        {
+          "name": "Search Posts - Votes",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "http://localhost:3100/api/search/posts?q=search&sort=votes&limit=10&offset=0",
+              "protocol": "http",
+              "host": ["localhost"],
+              "port": "3100",
+              "path": ["api", "search", "posts"],
+              "query": [
+                {
+                  "key": "q",
+                  "value": "search",
+                  "description": "Search query"
+                },
+                {
+                  "key": "sort",
+                  "value": "votes",
+                  "description": "Sort by vote score (upvotes - downvotes)"
+                },
+                {
+                  "key": "limit",
+                  "value": "10",
+                  "description": "Number of results per page"
+                },
+                {
+                  "key": "offset",
+                  "value": "0",
+                  "description": "Number of results to skip"
+                }
+              ]
+            },
+            "description": "Search posts sorted by vote score"
+          }
+        },
+        {
+          "name": "Search Posts - Views",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "http://localhost:3100/api/search/posts?q=api&sort=views&limit=10&offset=0",
+              "protocol": "http",
+              "host": ["localhost"],
+              "port": "3100",
+              "path": ["api", "search", "posts"],
+              "query": [
+                {
+                  "key": "q",
+                  "value": "api",
+                  "description": "Search query"
+                },
+                {
+                  "key": "sort",
+                  "value": "views",
+                  "description": "Sort by view count"
+                },
+                {
+                  "key": "limit",
+                  "value": "10",
+                  "description": "Number of results per page"
+                },
+                {
+                  "key": "offset",
+                  "value": "0",
+                  "description": "Number of results to skip"
+                }
+              ]
+            },
+            "description": "Search posts sorted by view count"
+          }
+        }
+      ]
+    },
+    {
+      "name": "Comments Search",
+      "item": [
+        {
+          "name": "Search Comments - Newest",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "http://localhost:3100/api/search/comments?q=ILIKE&sort=newest&limit=10&offset=0",
+              "protocol": "http",
+              "host": ["localhost"],
+              "port": "3100",
+              "path": ["api", "search", "comments"],
+              "query": [
+                {
+                  "key": "q",
+                  "value": "ILIKE",
+                  "description": "Search query"
+                },
+                {
+                  "key": "sort",
+                  "value": "newest",
+                  "description": "Sort order: votes, oldest, newest"
+                },
+                {
+                  "key": "limit",
+                  "value": "10",
+                  "description": "Number of results per page"
+                },
+                {
+                  "key": "offset",
+                  "value": "0",
+                  "description": "Number of results to skip"
+                }
+              ]
+            },
+            "description": "Search comments sorted by newest first"
+          }
+        },
+        {
+          "name": "Search Comments - Votes",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "http://localhost:3100/api/search/comments?q=full-text&sort=votes&limit=10&offset=0",
+              "protocol": "http",
+              "host": ["localhost"],
+              "port": "3100",
+              "path": ["api", "search", "comments"],
+              "query": [
+                {
+                  "key": "q",
+                  "value": "full-text",
+                  "description": "Search query"
+                },
+                {
+                  "key": "sort",
+                  "value": "votes",
+                  "description": "Sort by vote score"
+                },
+                {
+                  "key": "limit",
+                  "value": "10",
+                  "description": "Number of results per page"
+                },
+                {
+                  "key": "offset",
+                  "value": "0",
+                  "description": "Number of results to skip"
+                }
+              ]
+            },
+            "description": "Search comments sorted by vote score"
+          }
+        }
+      ]
+    },
+    {
+      "name": "Users Search",
+      "item": [
+        {
+          "name": "Search Users - Reputation",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "http://localhost:3100/api/search/users?q=test&sort=reputation&limit=10&offset=0",
+              "protocol": "http",
+              "host": ["localhost"],
+              "port": "3100",
+              "path": ["api", "search", "users"],
+              "query": [
+                {
+                  "key": "q",
+                  "value": "test",
+                  "description": "Search query"
+                },
+                {
+                  "key": "sort",
+                  "value": "reputation",
+                  "description": "Sort order: reputation, newest, oldest, username"
+                },
+                {
+                  "key": "limit",
+                  "value": "10",
+                  "description": "Number of results per page"
+                },
+                {
+                  "key": "offset",
+                  "value": "0",
+                  "description": "Number of results to skip"
+                }
+              ]
+            },
+            "description": "Search users sorted by reputation"
+          }
+        },
+        {
+          "name": "Search Users - Username",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "http://localhost:3100/api/search/users?q=user&sort=username&limit=10&offset=0",
+              "protocol": "http",
+              "host": ["localhost"],
+              "port": "3100",
+              "path": ["api", "search", "users"],
+              "query": [
+                {
+                  "key": "q",
+                  "value": "user",
+                  "description": "Search query"
+                },
+                {
+                  "key": "sort",
+                  "value": "username",
+                  "description": "Sort alphabetically by username"
+                },
+                {
+                  "key": "limit",
+                  "value": "10",
+                  "description": "Number of results per page"
+                },
+                {
+                  "key": "offset",
+                  "value": "0",
+                  "description": "Number of results to skip"
+                }
+              ]
+            },
+            "description": "Search users sorted alphabetically by username"
+          }
+        }
+      ]
+    },
+    {
+      "name": "Tags Search",
+      "item": [
+        {
+          "name": "Search Tags - Usage",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "http://localhost:3100/api/search/tags?q=nodejs&sort=usage&limit=10&offset=0",
+              "protocol": "http",
+              "host": ["localhost"],
+              "port": "3100",
+              "path": ["api", "search", "tags"],
+              "query": [
+                {
+                  "key": "q",
+                  "value": "nodejs",
+                  "description": "Search query"
+                },
+                {
+                  "key": "sort",
+                  "value": "usage",
+                  "description": "Sort order: usage, name, newest, oldest"
+                },
+                {
+                  "key": "limit",
+                  "value": "10",
+                  "description": "Number of results per page"
+                },
+                {
+                  "key": "offset",
+                  "value": "0",
+                  "description": "Number of results to skip"
+                }
+              ]
+            },
+            "description": "Search tags sorted by usage count"
+          }
+        },
+        {
+          "name": "Search Tags - Name",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "http://localhost:3100/api/search/tags?q=search&sort=name&limit=10&offset=0",
+              "protocol": "http",
+              "host": ["localhost"],
+              "port": "3100",
+              "path": ["api", "search", "tags"],
+              "query": [
+                {
+                  "key": "q",
+                  "value": "search",
+                  "description": "Search query"
+                },
+                {
+                  "key": "sort",
+                  "value": "name",
+                  "description": "Sort alphabetically by name"
+                },
+                {
+                  "key": "limit",
+                  "value": "10",
+                  "description": "Number of results per page"
+                },
+                {
+                  "key": "offset",
+                  "value": "0",
+                  "description": "Number of results to skip"
+                }
+              ]
+            },
+            "description": "Search tags sorted alphabetically by name"
+          }
+        }
+      ]
+    },
+    {
+      "name": "Advanced Search",
+      "item": [
+        {
+          "name": "Advanced Search - Posts with Tags",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "http://localhost:3100/api/search/advanced?q=search&type=posts&tags=nodejs,api&sort=votes&limit=10&offset=0",
+              "protocol": "http",
+              "host": ["localhost"],
+              "port": "3100",
+              "path": ["api", "search", "advanced"],
+              "query": [
+                {
+                  "key": "q",
+                  "value": "search",
+                  "description": "Search query"
+                },
+                {
+                  "key": "type",
+                  "value": "posts",
+                  "description": "Content type: posts, all"
+                },
+                {
+                  "key": "tags",
+                  "value": "nodejs,api",
+                  "description": "Comma-separated list of tags"
+                },
+                {
+                  "key": "sort",
+                  "value": "votes",
+                  "description": "Sort order: votes, views, answers, oldest, newest"
+                },
+                {
+                  "key": "limit",
+                  "value": "10",
+                  "description": "Number of results per page"
+                },
+                {
+                  "key": "offset",
+                  "value": "0",
+                  "description": "Number of results to skip"
+                }
+              ]
+            },
+            "description": "Advanced search for posts with specific tags"
+          }
+        },
+        {
+          "name": "Advanced Search - Posts with Answers",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "http://localhost:3100/api/search/advanced?q=postgresql&type=posts&hasAnswers=true&isAnswered=true&sort=answers&limit=10&offset=0",
+              "protocol": "http",
+              "host": ["localhost"],
+              "port": "3100",
+              "path": ["api", "search", "advanced"],
+              "query": [
+                {
+                  "key": "q",
+                  "value": "postgresql",
+                  "description": "Search query"
+                },
+                {
+                  "key": "type",
+                  "value": "posts",
+                  "description": "Content type: posts, all"
+                },
+                {
+                  "key": "hasAnswers",
+                  "value": "true",
+                  "description": "Filter posts with answers"
+                },
+                {
+                  "key": "isAnswered",
+                  "value": "true",
+                  "description": "Filter answered posts"
+                },
+                {
+                  "key": "sort",
+                  "value": "answers",
+                  "description": "Sort by number of answers"
+                },
+                {
+                  "key": "limit",
+                  "value": "10",
+                  "description": "Number of results per page"
+                },
+                {
+                  "key": "offset",
+                  "value": "0",
+                  "description": "Number of results to skip"
+                }
+              ]
+            },
+            "description": "Advanced search for answered posts with answers"
+          }
+        },
+        {
+          "name": "Advanced Search - Posts by Author",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "http://localhost:3100/api/search/advanced?q=api&type=posts&author=testuser&sort=newest&limit=10&offset=0",
+              "protocol": "http",
+              "host": ["localhost"],
+              "port": "3100",
+              "path": ["api", "search", "advanced"],
+              "query": [
+                {
+                  "key": "q",
+                  "value": "api",
+                  "description": "Search query"
+                },
+                {
+                  "key": "type",
+                  "value": "posts",
+                  "description": "Content type: posts, all"
+                },
+                {
+                  "key": "author",
+                  "value": "testuser",
+                  "description": "Username of the author"
+                },
+                {
+                  "key": "sort",
+                  "value": "newest",
+                  "description": "Sort by creation date (newest first)"
+                },
+                {
+                  "key": "limit",
+                  "value": "10",
+                  "description": "Number of results per page"
+                },
+                {
+                  "key": "offset",
+                  "value": "0",
+                  "description": "Number of results to skip"
+                }
+              ]
+            },
+            "description": "Advanced search for posts by specific author"
+          }
+        },
+        {
+          "name": "Advanced Search - Date Range",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "http://localhost:3100/api/search/advanced?q=search&type=posts&dateFrom=2024-01-01&dateTo=2024-12-31&sort=oldest&limit=10&offset=0",
+              "protocol": "http",
+              "host": ["localhost"],
+              "port": "3100",
+              "path": ["api", "search", "advanced"],
+              "query": [
+                {
+                  "key": "q",
+                  "value": "search",
+                  "description": "Search query"
+                },
+                {
+                  "key": "type",
+                  "value": "posts",
+                  "description": "Content type: posts, all"
+                },
+                {
+                  "key": "dateFrom",
+                  "value": "2024-01-01",
+                  "description": "Start date (YYYY-MM-DD)"
+                },
+                {
+                  "key": "dateTo",
+                  "value": "2024-12-31",
+                  "description": "End date (YYYY-MM-DD)"
+                },
+                {
+                  "key": "sort",
+                  "value": "oldest",
+                  "description": "Sort by creation date (oldest first)"
+                },
+                {
+                  "key": "limit",
+                  "value": "10",
+                  "description": "Number of results per page"
+                },
+                {
+                  "key": "offset",
+                  "value": "0",
+                  "description": "Number of results to skip"
+                }
+              ]
+            },
+            "description": "Advanced search for posts within a date range"
+          }
+        }
+      ]
+    },
+    {
+      "name": "Pagination Tests",
+      "item": [
+        {
+          "name": "Pagination - Page 1",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "http://localhost:3100/api/search/posts?q=search&limit=2&offset=0",
+              "protocol": "http",
+              "host": ["localhost"],
+              "port": "3100",
+              "path": ["api", "search", "posts"],
+              "query": [
+                {
+                  "key": "q",
+                  "value": "search",
+                  "description": "Search query"
+                },
+                {
+                  "key": "limit",
+                  "value": "2",
+                  "description": "Number of results per page"
+                },
+                {
+                  "key": "offset",
+                  "value": "0",
+                  "description": "Number of results to skip"
+                }
+              ]
+            },
+            "description": "First page of search results"
+          }
+        },
+        {
+          "name": "Pagination - Page 2",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "http://localhost:3100/api/search/posts?q=search&limit=2&offset=2",
+              "protocol": "http",
+              "host": ["localhost"],
+              "port": "3100",
+              "path": ["api", "search", "posts"],
+              "query": [
+                {
+                  "key": "q",
+                  "value": "search",
+                  "description": "Search query"
+                },
+                {
+                  "key": "limit",
+                  "value": "2",
+                  "description": "Number of results per page"
+                },
+                {
+                  "key": "offset",
+                  "value": "2",
+                  "description": "Number of results to skip"
+                }
+              ]
+            },
+            "description": "Second page of search results"
+          }
+        }
+      ]
+    },
+    {
+      "name": "Error Handling Tests",
+      "item": [
+        {
+          "name": "Empty Query Error",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "http://localhost:3100/api/search?q=",
+              "protocol": "http",
+              "host": ["localhost"],
+              "port": "3100",
+              "path": ["api", "search"],
+              "query": [
+                {
+                  "key": "q",
+                  "value": "",
+                  "description": "Empty search query (should return error)"
+                }
+              ]
+            },
+            "description": "Test error handling for empty search query"
+          }
+        },
+        {
+          "name": "Invalid Sort Parameter",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "http://localhost:3100/api/search/posts?q=test&sort=invalid",
+              "protocol": "http",
+              "host": ["localhost"],
+              "port": "3100",
+              "path": ["api", "search", "posts"],
+              "query": [
+                {
+                  "key": "q",
+                  "value": "test",
+                  "description": "Search query"
+                },
+                {
+                  "key": "sort",
+                  "value": "invalid",
+                  "description": "Invalid sort parameter (should use default)"
+                }
+              ]
+            },
+            "description": "Test handling of invalid sort parameter"
+          }
+        }
+      ]
+    }
+  ]
+} 
