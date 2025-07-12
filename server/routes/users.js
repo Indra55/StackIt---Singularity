@@ -70,6 +70,12 @@ router.get("/profile", authenticateToken, requireAuth, (req, res) => {
 });
 
 router.post("/register", async (req, res) => {
+  if (!req.body || typeof req.body !== 'object') {
+    return res.status(400).json({
+      message: "Missing or invalid request body",
+      status: "error"
+    });
+  }
   let { username, email, password, first_name, last_name, bio } = req.body;
   let errors = [];
 
