@@ -76,7 +76,7 @@ const PlatformNavbar = () => {
               className="flex items-center space-x-2 hover:opacity-80 transition-opacity"
             >
               <img 
-                src="/logo.svg" 
+                src="/logo.png" 
                 alt="StackIt Logo" 
                 className="h-8 w-8" 
               />
