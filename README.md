@@ -1,7 +1,5 @@
 <!-- LOGO & TITLE -->
-<p align="center">
-  <img src="client/public/placeholder.svg" alt="StackIt Logo" width="120" />
-</p>
+ 
 
 <h1 align="center">StackIt — Singularity 🚀🤖</h1>
 <p align="center">
@@ -66,7 +64,15 @@ StackIt is a **full-stack, community-driven Q&A platform** inspired by Stack Ove
 ---
 
 ## 🖼️ Screenshots
-
+<p align="center">
+  <img src="client/public/ss1.jpg" alt="Hero" width="400"/>
+  <img src="client/public/ss2.jpg" alt="Community Banner" width="400"/>
+  <img src="client/public/ss3.png" alt="OG Image" width="400"/>
+  
+  <img src="client/public/ss4.png" alt="OG Image" width="400"/>
+  
+  <img src="client/public/ss5.png" alt="OG Image" width="400"/>
+</p>
 
 
 > _“Ask anything. Help anyone. Build the singularity.”_
