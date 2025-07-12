@@ -3,6 +3,7 @@ const router = express.Router();
 const pool = require('../config/dbConfig');
 const { authenticateToken, requireAuth } = require('../middleware/auth');
 const { isModerator, isAdmin, checkBanStatus } = require('../middleware/moderator');
+const { createNotification } = require('./notifications');
 
 // GET /api/communities - Get all public communities
 router.get('/', async (req, res) => {
@@ -203,6 +204,36 @@ router.post('/:name/join', authenticateToken, requireAuth, async (req, res) => {
       'UPDATE communities SET member_count = member_count + 1 WHERE id = $1',
       [community.id]
     );
+    
+    // Notify community admins about new member
+    try {
+      const adminsQuery = `
+        SELECT cm.user_id, u.username
+        FROM community_members cm
+        JOIN users u ON cm.user_id = u.id
+        WHERE cm.community_id = $1 AND cm.role IN ('admin', 'moderator')
+      `;
+      const adminsResult = await pool.query(adminsQuery, [community.id]);
+      
+      for (const admin of adminsResult.rows) {
+        if (admin.user_id !== userId) { // Don't notify yourself
+          try {
+            await createNotification({
+              user_id: admin.user_id,
+              type: 'comment', // Using 'comment' type for community activity
+              title: 'New Community Member',
+              message: `${req.user.username} joined r/${community.name}`,
+              related_id: community.id,
+              related_type: 'community'
+            });
+          } catch (notifErr) {
+            console.error('Failed to create community join notification:', notifErr);
+          }
+        }
+      }
+    } catch (err) {
+      console.error('Failed to notify community admins:', err);
+    }
     
     res.json({
       status: 'success',
@@ -434,6 +465,20 @@ router.post('/:name/ban', authenticateToken, requireAuth, isModerator, async (re
       VALUES ($1, $2, 'ban', $3, $4)
     `, [communityId, moderatorId, user_id, reason]);
     
+    // Notify the banned user
+    try {
+      await createNotification({
+        user_id: user_id,
+        type: 'comment', // Using 'comment' type for moderation actions
+        title: 'You were banned',
+        message: `You were banned from r/${req.community.name}${reason ? `: ${reason}` : ''}`,
+        related_id: communityId,
+        related_type: 'community'
+      });
+    } catch (notifErr) {
+      console.error('Failed to create ban notification:', notifErr);
+    }
+    
     res.json({
       status: 'success',
       message: 'User banned successfully',
@@ -487,6 +532,20 @@ router.post('/:name/unban', authenticateToken, requireAuth, isModerator, async (
       VALUES ($1, $2, 'unban', $3)
     `, [communityId, moderatorId, user_id]);
     
+    // Notify the unbanned user
+    try {
+      await createNotification({
+        user_id: user_id,
+        type: 'comment', // Using 'comment' type for moderation actions
+        title: 'You were unbanned',
+        message: `You were unbanned from r/${req.community.name}`,
+        related_id: communityId,
+        related_type: 'community'
+      });
+    } catch (notifErr) {
+      console.error('Failed to create unban notification:', notifErr);
+    }
+    
     res.json({
       status: 'success',
       message: 'User unbanned successfully'
@@ -535,6 +594,20 @@ router.delete('/:name/posts/:postId', authenticateToken, requireAuth, isModerato
       INSERT INTO moderation_log (community_id, moderator_id, action_type, target_user_id, target_post_id)
       VALUES ($1, $2, 'delete_post', $3, $4)
     `, [communityId, moderatorId, post.user_id, postId]);
+    
+    // Notify the post owner about deletion
+    try {
+      await createNotification({
+        user_id: post.user_id,
+        type: 'comment', // Using 'comment' type for moderation actions
+        title: 'Post Deleted',
+        message: `Your post "${post.title}" was deleted by a moderator in r/${req.community.name}`,
+        related_id: communityId,
+        related_type: 'community'
+      });
+    } catch (notifErr) {
+      console.error('Failed to create post deletion notification:', notifErr);
+    }
     
     res.json({
       status: 'success',
@@ -585,6 +658,20 @@ router.delete('/:name/comments/:commentId', authenticateToken, requireAuth, isMo
       INSERT INTO moderation_log (community_id, moderator_id, action_type, target_user_id, target_comment_id)
       VALUES ($1, $2, 'delete_comment', $3, $4)
     `, [communityId, moderatorId, comment.user_id, commentId]);
+    
+    // Notify the comment owner about deletion
+    try {
+      await createNotification({
+        user_id: comment.user_id,
+        type: 'comment', // Using 'comment' type for moderation actions
+        title: 'Comment Deleted',
+        message: `Your comment was deleted by a moderator in r/${req.community.name}`,
+        related_id: communityId,
+        related_type: 'community'
+      });
+    } catch (notifErr) {
+      console.error('Failed to create comment deletion notification:', notifErr);
+    }
     
     res.json({
       status: 'success',
@@ -653,6 +740,20 @@ router.post('/:name/promote', authenticateToken, requireAuth, isAdmin, async (re
       VALUES ($1, $2, 'promote_mod', $3)
     `, [communityId, adminId, user_id]);
     
+    // Notify the promoted user
+    try {
+      await createNotification({
+        user_id: user_id,
+        type: 'comment', // Using 'comment' type for community activity
+        title: 'Promoted to Moderator',
+        message: `You were promoted to moderator in r/${req.community.name}`,
+        related_id: communityId,
+        related_type: 'community'
+      });
+    } catch (notifErr) {
+      console.error('Failed to create promotion notification:', notifErr);
+    }
+    
     res.json({
       status: 'success',
       message: 'User promoted to moderator successfully'
@@ -712,6 +813,20 @@ router.post('/:name/demote', authenticateToken, requireAuth, isAdmin, async (req
       INSERT INTO moderation_log (community_id, moderator_id, action_type, target_user_id)
       VALUES ($1, $2, 'demote_mod', $3)
     `, [communityId, adminId, user_id]);
+    
+    // Notify the demoted user
+    try {
+      await createNotification({
+        user_id: user_id,
+        type: 'comment', // Using 'comment' type for community activity
+        title: 'Demoted to Member',
+        message: `You were demoted to member in r/${req.community.name}`,
+        related_id: communityId,
+        related_type: 'community'
+      });
+    } catch (notifErr) {
+      console.error('Failed to create demotion notification:', notifErr);
+    }
     
     res.json({
       status: 'success',
