@@ -2,12 +2,13 @@ require("dotenv").config()
 
 const {Pool} = require("pg")
 
-const isProduction = process.env.NODE_ENV === "production";
+const connectionString = "postgresql://odoo_db_xya9_user:dJOYBcGBRmIzIVpoJrCdzwGiJ7LHEJ0b@dpg-d1ou2fs9c44c73815ii0-a.singapore-postgres.render.com/odoo_db_xya9"
 
-const connectionString = `postgresql://${process.env.DB_USER}:${process.env.DB_PASSWORD}@${process.env.DB_HOST}:${process.env.DB_PORT}/${process.env.DB_DB}`
-
-const pool= new Pool({
-    connectionString: isProduction? process.env.DATABASE_URL:connectionString
+const pool = new Pool({
+    connectionString: connectionString,
+    ssl: {
+        rejectUnauthorized: false
+    }
 })
 
 module.exports = pool

@@ -1,9 +1,9 @@
 const express = require("express");
 const router = express.Router();
-const  pool  = require("../config/dbConfig");
-const { checkAuthenticated, checkNotAuthenticated } = require("../middleware/auth");
+const pool = require("../config/dbConfig");
+const { authenticateToken, requireAuth } = require("../middleware/auth");
 
-router.get("/posts", checkNotAuthenticated, async (req, res) => {
+router.get("/posts", async (req, res) => {
   try {
     const query = `
       SELECT 
@@ -38,7 +38,7 @@ router.get("/posts", checkNotAuthenticated, async (req, res) => {
 });
 
 
-router.post("/posts/:id/upvote", checkNotAuthenticated, async (req, res) => {
+router.post("/posts/:id/upvote", authenticateToken, requireAuth, async (req, res) => {
   const postID = req.params.id;
   const userID = req.user.id; 
 
@@ -90,7 +90,7 @@ router.post("/posts/:id/upvote", checkNotAuthenticated, async (req, res) => {
   }
 });
 
-router.post("/posts/:id/downvote", checkNotAuthenticated, async (req, res) => {
+router.post("/posts/:id/downvote", authenticateToken, requireAuth, async (req, res) => {
   const postID = req.params.id;
   const userID = req.user.id; 
 
@@ -146,7 +146,7 @@ router.post("/posts/:id/downvote", checkNotAuthenticated, async (req, res) => {
 
 
 
-router.get("/posts/:id", checkNotAuthenticated, async (req, res) => {
+router.get("/posts/:id", authenticateToken, requireAuth, async (req, res) => {
   const postId = req.params.id;
   const userId = req.user.id;  
 
@@ -220,7 +220,7 @@ router.get("/posts/:id/comments", (req, res) => {
     });
 });
 
-router.post("/posts/:id/comment", checkNotAuthenticated, (req, res) => {
+router.post("/posts/:id/comment", authenticateToken, requireAuth, (req, res) => {
     const postID = req.params.id;
     const userID = req.user.id;
     const content = req.body.content;
@@ -259,7 +259,7 @@ router.post("/posts/:id/comment", checkNotAuthenticated, (req, res) => {
     });
 });
 
-router.post("/posts/create", checkNotAuthenticated, (req, res) => {
+router.post("/posts/create", authenticateToken, requireAuth, (req, res) => {
     const {content} = req.body;
     const userID = req.user.id;
     
