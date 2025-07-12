@@ -46,7 +46,7 @@ router.get("/posts", async (req, res) => {
   }
 });
 
-// Get posts by tag
+// Get posts
 router.get("/posts/tag/:tag", async (req, res) => {
   try {
     const tag = req.params.tag.toLowerCase();
