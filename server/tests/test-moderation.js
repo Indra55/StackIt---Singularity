@@ -12,40 +12,40 @@ let testUserId;
 
 // Test data
 const adminUser = {
-  username: 'modtestadmin',
-  email: 'modtestadmin@example.com',
+  username: 'reddit_admin_super',
+  email: 'reddit_admin_super@example.com',
   password: 'password123',
-  first_name: 'Mod',
-  last_name: 'Admin'
+  first_name: 'Reddit',
+  last_name: 'SuperAdmin'
 };
 
 const moderatorUser = {
-  username: 'modtestmod',
-  email: 'modtestmod@example.com',
+  username: 'subreddit_mod_power',
+  email: 'subreddit_mod_power@example.com',
   password: 'password123',
-  first_name: 'Mod',
-  last_name: 'Moderator'
+  first_name: 'Subreddit',
+  last_name: 'PowerMod'
 };
 
 const regularUser = {
-  username: 'modtestuser',
-  email: 'modtestuser@example.com',
+  username: 'normal_redditor_user',
+  email: 'normal_redditor_user@example.com',
   password: 'password123',
-  first_name: 'Mod',
-  last_name: 'User'
+  first_name: 'Normal',
+  last_name: 'Redditor'
 };
 
 const bannedUser = {
-  username: 'modtestbanned',
-  email: 'modtestbanned@example.com',
+  username: 'troublemaker_banned',
+  email: 'troublemaker_banned@example.com',
   password: 'password123',
-  first_name: 'Mod',
-  last_name: 'Banned'
+  first_name: 'Trouble',
+  last_name: 'Maker'
 };
 
 const testCommunity = {
-  name: 'modtestcommunity',
-  description: 'A test community for testing moderation features'
+  name: 'reddit_style_test_sub',
+  description: 'A test subreddit-style community for testing moderation features'
 };
 
 async function runModerationTests() {

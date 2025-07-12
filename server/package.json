@@ -4,6 +4,7 @@
   "main": "server.js",
   "scripts": {
     "test": "node test-posts.js",
+    "test:notifications": "node tests/test-notifications.js",
     "test:jest": "jest",
     "dev": "nodemon server.js"
   },
@@ -24,7 +25,7 @@
     "socket.io": "^4.8.1"
   },
   "devDependencies": {
-    "axios": "^1.6.0",
+    "axios": "^1.10.0",
     "jest": "^29.7.0",
     "supertest": "^6.3.3"
   }
