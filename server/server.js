@@ -33,6 +33,8 @@ app.use("/api/notifications", require("./routes/notifications"))
 app.use("/api/chats", require("./routes/chats"))
 app.use("/api/uploads", require("./routes/uploads"))
 app.use("/api/communities", require("./routes/communities"))
+app.use("/api/admin", require("./routes/admin"))
+app.use('/api/mentions', require('./routes/mentionRoutes'))
 
 // Map userId to socketId(s)
 const userSocketMap = new Map();

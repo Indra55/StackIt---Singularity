@@ -10,8 +10,8 @@ let testUploadId;
 
 // Test data
 const testUser = {
-  username: 'uploadt3estuser',
-  email: 'uploadtest3@example.com',
+  username: 'uploadte3estuser',
+  email: 'uploadtestee3@example.com',
   password: 'password123',
   first_name: 'Upload',
   last_name: 'Test'

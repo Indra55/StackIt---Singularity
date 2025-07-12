@@ -3,6 +3,7 @@ const router = express.Router();
 const pool = require("../config/dbConfig");
 const { authenticateToken, requireAuth } = require("../middleware/auth");
 const { createNotification } = require("./notifications");
+const { processMentions } = require("./mentionRoutes");
 
 // Get all posts
 router.get("/posts", async (req, res) => {
@@ -201,6 +202,14 @@ router.post("/posts/create", authenticateToken, requireAuth, async (req, res) =>
     `;
 
     const result = await pool.query(query, [title, content, userID, processedTags, communityId]);
+    const postId = result.rows[0].id;
+
+    // Process mentions in the post
+    const mentionResult = await processMentions({
+        postId: postId,
+        mentionerUserId: userID,
+        content
+    });
 
     // If post is in a community, notify community members about new post
     if (communityId) {
@@ -263,7 +272,8 @@ router.post("/posts/create", authenticateToken, requireAuth, async (req, res) =>
     res.json({
       message: "Post created successfully",
       status: "success",
-      post: result.rows[0]
+      post: result.rows[0],
+      mentions: mentionResult.mentions || []
     });
   } catch (err) {
     console.error(err);
@@ -371,6 +381,41 @@ router.post("/posts/:id/comment", authenticateToken, requireAuth, async (req, re
   }
 
   try {
+    // Check if post exists and get community info
+    const postQuery = `
+      SELECT p.*, c.name as community_name 
+      FROM posts p 
+      LEFT JOIN communities c ON p.community_id = c.id 
+      WHERE p.id = $1
+    `;
+    const postResult = await pool.query(postQuery, [postID]);
+    
+    if (postResult.rows.length === 0) {
+      return res.status(404).json({
+        message: "Post not found",
+        status: "error"
+      });
+    }
+    
+    const post = postResult.rows[0];
+    
+    // If post is in a community, check if user is banned
+    if (post.community_id) {
+      const banQuery = `
+        SELECT id FROM community_bans 
+        WHERE community_id = $1 AND user_id = $2 
+        AND (expires_at IS NULL OR expires_at > NOW())
+      `;
+      const banResult = await pool.query(banQuery, [post.community_id, userID]);
+      
+      if (banResult.rows.length > 0) {
+        return res.status(403).json({
+          message: "You are banned from this community and cannot comment",
+          status: "error"
+        });
+      }
+    }
+
     const query = `
       INSERT INTO comments (post_id, user_id, content, upvotes, downvotes, is_accepted, created_at, updated_at)
       VALUES ($1, $2, $3, 0, 0, false, NOW(), NOW()) 
@@ -378,6 +423,15 @@ router.post("/posts/:id/comment", authenticateToken, requireAuth, async (req, re
     `;
     
     const result = await pool.query(query, [postID, userID, content]);
+    const commentId = result.rows[0].id;
+
+    // Process mentions in the comment
+    const mentionResult = await processMentions({
+        postId: postID,
+        commentId: commentId,
+        mentionerUserId: userID,
+        content
+    });
 
     // Note: answer_count is automatically updated by the database trigger
 
@@ -436,7 +490,8 @@ router.post("/posts/:id/comment", authenticateToken, requireAuth, async (req, re
     res.json({
       message: "Comment added successfully",
       status: "success",
-      comment: result.rows[0]
+      comment: result.rows[0],
+      mentions: mentionResult.mentions || []
     });
   } catch (err) {
     console.error(err);
@@ -739,13 +794,13 @@ router.post("/comments/:id/downvote", authenticateToken, requireAuth, async (req
       comment: updatedComment.rows[0]
     });
   } catch (err) {
-    console.error(err);
+            console.error(err);
     res.status(500).json({
       message: "Cannot downvote comment",
-      status: "error",
-      error: err.message
-    });
-  }
+              status: "error",
+              error: err.message
+            });
+        }
 });
 
 // Update post status
@@ -755,7 +810,7 @@ router.put("/posts/:id/status", authenticateToken, requireAuth, async (req, res)
   const userId = req.user.id;
 
   if (!status || !['open', 'closed', 'duplicate', 'off-topic'].includes(status)) {
-    return res.status(400).json({
+      return res.status(400).json({
       message: "Invalid status. Must be one of: open, closed, duplicate, off-topic",
       status: "error"
     });
@@ -785,13 +840,13 @@ router.put("/posts/:id/status", authenticateToken, requireAuth, async (req, res)
       status: "success"
     });
   } catch (err) {
-    console.error(err);
+            console.error(err);
     res.status(500).json({
       message: "Cannot update post status",
-      status: "error",
-      error: err.message
-    });
-  }
+              status: "error",
+              error: err.message
+            });
+        }
 });
 
 module.exports = router;

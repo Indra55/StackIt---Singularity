@@ -7,8 +7,8 @@ let testCommentId;
 
 // Test data
 const testUser = {
-  username: 'testusedrdvb679',
-  email: 'test6bvd97d@example.com',
+  username: 'testuedwsedrdvb679',
+  email: 'test6bvdewd97d@example.com',
   password: 'password123',
   first_name: 'Test',
   last_name: 'User'
