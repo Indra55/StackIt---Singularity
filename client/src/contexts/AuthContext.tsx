@@ -87,57 +87,85 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     }
   }, []);
 
+  const BACKEND_URL = 'http://localhost:3100';
+
   const login = async (email: string, password: string, rememberMe = false, role: 'user' | 'admin' = 'user') => {
-    // Mock login implementation - replace with actual API call
-    const mockUser: User = {
-      id: role === 'admin' ? 'admin-1' : '1',
-      username: role === 'admin' ? 'admin' : email.split('@')[0],
-      email,
-      firstName: role === 'admin' ? 'Admin' : 'John',
-      lastName: role === 'admin' ? 'User' : 'Doe',
-      avatarUrl: undefined,
-      reputation: role === 'admin' ? 5000 : 1520,
-      role: role,
-      isVerified: true,
-      isBanned: false,
-      createdAt: new Date(),
-      communities: role === 'admin' ? ['all'] : ['react', 'javascript', 'typescript']
-    };
-
+    // Real login implementation
+    const response = await fetch(`${BACKEND_URL}/users/login`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ email, password })
+    });
+    const data = await response.json();
+    if (!response.ok || data.status !== 'success') {
+      throw new Error(data.message || 'Login failed');
+    }
+    // Store token and user
     const storage = rememberMe ? localStorage : sessionStorage;
-    storage.setItem('stackit_user', JSON.stringify(mockUser));
-
+    storage.setItem('stackit_token', data.token);
+    storage.setItem('stackit_user', JSON.stringify({ ...data.user, createdAt: data.user.created_at }));
     setAuthState({
-      user: mockUser,
+      user: { ...data.user, createdAt: new Date(data.user.created_at) },
       isAuthenticated: true,
       isLoading: false
     });
   };
 
   const signup = async (userData: SignupData) => {
-    // Mock signup implementation - replace with actual API call
-    const newUser: User = {
-      id: Date.now().toString(),
-      username: userData.username,
-      email: userData.email,
-      firstName: userData.firstName,
-      lastName: userData.lastName,
-      avatarUrl: userData.avatarFile ? URL.createObjectURL(userData.avatarFile) : undefined,
-      reputation: 0,
-      role: 'user',
-      isVerified: false,
-      isBanned: false,
-      createdAt: new Date(),
-      communities: userData.communities
-    };
+    // Real signup implementation
+    const formData = new FormData();
+    formData.append('username', userData.username);
+    formData.append('email', userData.email);
+    formData.append('password', userData.password);
+    if (userData.firstName) formData.append('first_name', userData.firstName);
+    if (userData.lastName) formData.append('last_name', userData.lastName);
+    if (userData.avatarFile) formData.append('avatar', userData.avatarFile);
+    // Communities are not handled in backend registration, so skip for now
 
-    localStorage.setItem('stackit_user', JSON.stringify(newUser));
-
+    // Use JSON if no avatar, otherwise use FormData
+    let response, data;
+    if (userData.avatarFile) {
+      response = await fetch(`${BACKEND_URL}/users/register`, {
+        method: 'POST',
+        body: formData
+      });
+    } else {
+      response = await fetch(`${BACKEND_URL}/users/register`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          username: userData.username,
+          email: userData.email,
+          password: userData.password,
+          first_name: userData.firstName,
+          last_name: userData.lastName
+        })
+      });
+    }
+    data = await response.json();
+    if (!response.ok || data.status !== 'success') {
+      throw new Error(data.message || 'Signup failed');
+    }
+    // Store token and user
+    localStorage.setItem('stackit_token', data.token);
+    localStorage.setItem('stackit_user', JSON.stringify({ ...data.user, createdAt: data.user.created_at }));
     setAuthState({
-      user: newUser,
+      user: { ...data.user, createdAt: new Date(data.user.created_at) },
       isAuthenticated: true,
       isLoading: false
     });
+    // If avatarFile was provided, upload avatar after registration
+    if (userData.avatarFile) {
+      const token = data.token;
+      const avatarForm = new FormData();
+      avatarForm.append('avatar', userData.avatarFile);
+      await fetch(`${BACKEND_URL}/api/uploads/avatar`, {
+        method: 'POST',
+        headers: { 'Authorization': `Bearer ${token}` },
+        body: avatarForm
+      });
+      // Optionally, update user state with new avatar URL
+    }
   };
 
   const logout = () => {

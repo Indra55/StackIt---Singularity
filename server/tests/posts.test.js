@@ -4,6 +4,8 @@ const app = require('../server');
 const pool = require('../config/dbConfig');
 
 // Test data
+const uniqueSuffix = Date.now() + Math.floor(Math.random() * 10000);
+const testPassword = 'password123';
 let authToken;
 let testUserId;
 let testPostId;
@@ -23,9 +25,9 @@ describe('Posts API Tests', () => {
     const user1Response = await request(app)
       .post('/users/register')
       .send({
-        username: 'testuser1',
-        email: 'test1@example.com',
-        password: 'password123',
+        username: `testuser1_${uniqueSuffix}`,
+        email: `test1_${uniqueSuffix}@example.com`,
+        password: testPassword,
         first_name: 'Test',
         last_name: 'User1'
       });
@@ -36,8 +38,8 @@ describe('Posts API Tests', () => {
     const login1Response = await request(app)
       .post('/users/login')
       .send({
-        email: 'test1@example.com',
-        password: 'password123'
+        email: `test1_${uniqueSuffix}@example.com`,
+        password: testPassword
       });
 
     authToken = login1Response.body.token;
@@ -46,9 +48,9 @@ describe('Posts API Tests', () => {
     const user2Response = await request(app)
       .post('/users/register')
       .send({
-        username: 'testuser2',
-        email: 'test2@example.com',
-        password: 'password123',
+        username: `testuser2_${uniqueSuffix}`,
+        email: `test2_${uniqueSuffix}@example.com`,
+        password: testPassword,
         first_name: 'Test',
         last_name: 'User2'
       });
@@ -59,8 +61,8 @@ describe('Posts API Tests', () => {
     const login2Response = await request(app)
       .post('/users/login')
       .send({
-        email: 'test2@example.com',
-        password: 'password123'
+        email: `test2_${uniqueSuffix}@example.com`,
+        password: testPassword
       });
 
     authToken2 = login2Response.body.token;
