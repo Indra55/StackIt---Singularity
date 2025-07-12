@@ -1,6 +1,6 @@
 <!-- LOGO & TITLE -->
 <p align="center">
-  <img src="client/public/logo.png" alt="StackIt Logo" width="120" />
+  <img src="client/public/placeholder.svg" alt="StackIt Logo" width="120" />
 </p>
 
 <h1 align="center">StackIt — Singularity 🚀🤖</h1>
@@ -359,6 +359,21 @@ Please open an issue or PR, or just drop by and say hi!
 ## 📄 License
 
 MIT © [Your Name]
+
+---
+
+## 👥 Team
+
+StackIt — Singularity was built with passion and teamwork by:
+
+- **Hitanshu Gala** — Backend development, database design, real-time features
+- **Omkar Dalvi** — Backend development, API design, security
+- **Mihir Patil** — Frontend development, UI/UX, React components
+- **Pranav Dharvadkar** — Frontend development, UI/UX, state management
+
+> Backend: Hitanshu & Omkar | Frontend: Mihir & Pranav
+
+We collaborated closely across all features, with regular code reviews and shared design decisions to ensure a seamless full-stack experience.
 
 ---
 
