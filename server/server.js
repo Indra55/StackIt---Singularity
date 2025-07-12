@@ -6,7 +6,7 @@ const server = http.createServer(app);
 const { Server } = require('socket.io');
 const io = new Server(server, {
   cors: {
-    origin: process.env.FRONTEND_URL || 'http://localhost:3000',
+    origin: '*', // Allow all origins for development
     credentials: true
   }
 });
@@ -83,6 +83,9 @@ io.on('connection', (socket) => {
       // Emit to sender for confirmation
       socket.emit('chat:message', message);
       // Create notification for recipient
+      console.log('[DEBUG] About to create notification for chat message:', {
+        recipientId, chatId, sender: socket.user.username
+      });
       await createNotification({
         user_id: recipientId,
         type: 'chat',
@@ -93,6 +96,7 @@ io.on('connection', (socket) => {
       });
       callback && callback({ status: 'success', message });
     } catch (err) {
+      console.log('[DEBUG] chat:message error:', err);
       callback && callback({ status: 'error', message: err.message });
     }
   });

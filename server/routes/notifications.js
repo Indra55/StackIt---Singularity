@@ -5,27 +5,37 @@ const { authenticateToken, requireAuth } = require('../middleware/auth');
 
 // Utility: Create a notification
 async function createNotification({ user_id, type, title, message, related_id, related_type }) {
+  const allowedTypes = ['mention', 'answer', 'vote', 'comment', 'chat']; // Now allow 'chat' as well
+  if (!allowedTypes.includes(type)) {
+    console.log('[DEBUG] Invalid notification type:', type);
+    throw new Error('Invalid notification type: ' + type);
+  }
+  console.log('[DEBUG] createNotification called with:', { user_id, type, title, message, related_id, related_type });
   const query = `
     INSERT INTO notifications (user_id, type, title, message, related_id, related_type, is_read, created_at)
     VALUES ($1, $2, $3, $4, $5, $6, false, NOW())
     RETURNING *
   `;
   const values = [user_id, type, title, message, related_id, related_type];
-  const { rows } = await pool.query(query, values);
-  const notification = rows[0];
-
-  // Real-time: emit notification if user is online
   try {
-    // Try to get sendNotificationToUser from global app instance
-    const app = require('../server');
-    if (app && app.get && app.get('sendNotificationToUser')) {
-      app.get('sendNotificationToUser')(user_id, notification);
+    const { rows } = await pool.query(query, values);
+    const notification = rows[0];
+    console.log('[DEBUG] Notification inserted:', notification);
+    // Real-time: emit notification if user is online
+    try {
+      const app = require('../server');
+      if (app && app.get && app.get('sendNotificationToUser')) {
+        app.get('sendNotificationToUser')(user_id, notification);
+        console.log('[DEBUG] Real-time notification emitted to user:', user_id);
+      }
+    } catch (e) {
+      console.log('[DEBUG] Real-time emit failed:', e);
     }
-  } catch (e) {
-    // If not available, skip real-time emit
+    return notification;
+  } catch (err) {
+    console.log('[DEBUG] Notification DB insert error:', err);
+    throw err;
   }
-
-  return notification;
 }
 
 // GET /api/notifications - Get all notifications for the logged-in user
