@@ -527,14 +527,14 @@ router.delete('/:name/posts/:postId', authenticateToken, requireAuth, isModerato
     
     const post = postResult.rows[0];
     
-    // Delete the post (cascade will handle comments)
-    await pool.query('DELETE FROM posts WHERE id = $1', [postId]);
-    
-    // Log the action
+    // Log the action BEFORE deleting the post
     await pool.query(`
       INSERT INTO moderation_log (community_id, moderator_id, action_type, target_user_id, target_post_id)
       VALUES ($1, $2, 'delete_post', $3, $4)
     `, [communityId, moderatorId, post.user_id, postId]);
+    
+    // Delete the post (cascade will handle comments)
+    await pool.query('DELETE FROM posts WHERE id = $1', [postId]);
     
     res.json({
       status: 'success',
@@ -577,14 +577,14 @@ router.delete('/:name/comments/:commentId', authenticateToken, requireAuth, isMo
     
     const comment = commentResult.rows[0];
     
-    // Delete the comment
-    await pool.query('DELETE FROM comments WHERE id = $1', [commentId]);
-    
-    // Log the action
+    // Log the action BEFORE deleting the comment
     await pool.query(`
       INSERT INTO moderation_log (community_id, moderator_id, action_type, target_user_id, target_comment_id)
       VALUES ($1, $2, 'delete_comment', $3, $4)
     `, [communityId, moderatorId, comment.user_id, commentId]);
+    
+    // Delete the comment
+    await pool.query('DELETE FROM comments WHERE id = $1', [commentId]);
     
     res.json({
       status: 'success',

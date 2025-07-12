@@ -312,6 +312,41 @@ router.post("/posts/:id/comment", authenticateToken, requireAuth, async (req, re
   }
 
   try {
+    // Check if post exists and get community info
+    const postQuery = `
+      SELECT p.*, c.name as community_name 
+      FROM posts p 
+      LEFT JOIN communities c ON p.community_id = c.id 
+      WHERE p.id = $1
+    `;
+    const postResult = await pool.query(postQuery, [postID]);
+    
+    if (postResult.rows.length === 0) {
+      return res.status(404).json({
+        message: "Post not found",
+        status: "error"
+      });
+    }
+    
+    const post = postResult.rows[0];
+    
+    // If post is in a community, check if user is banned
+    if (post.community_id) {
+      const banQuery = `
+        SELECT id FROM community_bans 
+        WHERE community_id = $1 AND user_id = $2 
+        AND (expires_at IS NULL OR expires_at > NOW())
+      `;
+      const banResult = await pool.query(banQuery, [post.community_id, userID]);
+      
+      if (banResult.rows.length > 0) {
+        return res.status(403).json({
+          message: "You are banned from this community and cannot comment",
+          status: "error"
+        });
+      }
+    }
+
     const query = `
       INSERT INTO comments (post_id, user_id, content, upvotes, downvotes, is_accepted, created_at, updated_at)
       VALUES ($1, $2, $3, 0, 0, false, NOW(), NOW()) 
