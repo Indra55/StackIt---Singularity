@@ -51,6 +51,15 @@ const NotificationBell = () => {
     deleteNotification(id);
   };
 
+  const handleNotificationClick = (notification: any) => {
+    console.debug('[NotificationBell] Notification clicked:', notification);
+    if (notification.actionUrl) {
+      window.location.href = notification.actionUrl;
+    } else {
+      window.location.href = '/notifications';
+    }
+  };
+
   return (
     <DropdownMenu open={isOpen} onOpenChange={setIsOpen}>
       <DropdownMenuTrigger asChild>
@@ -88,45 +97,44 @@ const NotificationBell = () => {
                   !notification.isRead ? 'bg-pulse-50 border-l-4 border-l-pulse-500' : ''
                 }`}
                 asChild
+                onClick={() => handleNotificationClick(notification)}
               >
-                <Link to={notification.actionUrl || '/notifications'}>
-                  <div className="flex items-start space-x-3">
-                    <span className="text-lg flex-shrink-0">
-                      {getNotificationIcon(notification.type)}
-                    </span>
-                    <div className="flex-1 min-w-0">
-                      <p className="text-sm font-medium text-gray-900 truncate">
-                        {notification.title}
-                      </p>
-                      <p className="text-sm text-gray-600 line-clamp-2">
-                        {notification.message}
-                      </p>
-                      <p className="text-xs text-gray-500 mt-1">
-                        {formatDistanceToNow(notification.createdAt, { addSuffix: true })}
-                      </p>
-                    </div>
-                    <div className="flex items-center space-x-1">
-                      {!notification.isRead && (
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          onClick={(e) => handleMarkAsRead(notification.id, e)}
-                          className="h-6 w-6 p-0 hover:bg-green-100"
-                        >
-                          <Check className="h-3 w-3 text-green-600" />
-                        </Button>
-                      )}
+                <div className="flex items-start space-x-3">
+                  <span className="text-lg flex-shrink-0">
+                    {getNotificationIcon(notification.type)}
+                  </span>
+                  <div className="flex-1 min-w-0">
+                    <p className="text-sm font-medium text-gray-900 truncate">
+                      {notification.title}
+                    </p>
+                    <p className="text-sm text-gray-600 line-clamp-2">
+                      {notification.message}
+                    </p>
+                    <p className="text-xs text-gray-500 mt-1">
+                      {formatDistanceToNow(notification.createdAt, { addSuffix: true })}
+                    </p>
+                  </div>
+                  <div className="flex items-center space-x-1">
+                    {!notification.isRead && (
                       <Button
                         variant="ghost"
                         size="sm"
-                        onClick={(e) => handleDelete(notification.id, e)}
-                        className="h-6 w-6 p-0 hover:bg-red-100"
+                        onClick={(e) => handleMarkAsRead(notification.id, e)}
+                        className="h-6 w-6 p-0 hover:bg-green-100"
                       >
-                        <Trash2 className="h-3 w-3 text-red-600" />
+                        <Check className="h-3 w-3 text-green-600" />
                       </Button>
-                    </div>
+                    )}
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={(e) => handleDelete(notification.id, e)}
+                      className="h-6 w-6 p-0 hover:bg-red-100"
+                    >
+                      <Trash2 className="h-3 w-3 text-red-600" />
+                    </Button>
                   </div>
-                </Link>
+                </div>
               </DropdownMenuItem>
             ))
           ) : (

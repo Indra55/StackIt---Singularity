@@ -52,6 +52,26 @@ const AskQuestion = () => {
     fetchData();
   }, [slug]);
 
+  useEffect(() => {
+    // Load draft from localStorage and validate
+    try {
+      const draft = localStorage.getItem('ask_question_draft');
+      if (draft) {
+        const parsed = JSON.parse(draft);
+        if (parsed && typeof parsed === 'object' && parsed.title && parsed.content) {
+          setTitle(parsed.title);
+          setContent(parsed.content);
+          setTags(parsed.tags || []);
+          if (parsed.community) setCommunity(parsed.community);
+        } else {
+          localStorage.removeItem('ask_question_draft');
+        }
+      }
+    } catch (e) {
+      localStorage.removeItem('ask_question_draft');
+    }
+  }, []);
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError(null);
