@@ -1,6 +1,6 @@
 <!-- LOGO & TITLE -->
 <p align="center">
-  <img src="client/public/placeholder.svg" alt="StackIt Logo" width="120" />
+  <img src="client/public/logo.png" alt="StackIt Logo" width="120" />
 </p>
 
 <h1 align="center">StackIt — Singularity 🚀🤖</h1>
