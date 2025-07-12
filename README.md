@@ -74,7 +74,7 @@ StackIt is a **full-stack, community-driven Q&A platform** inspired by Stack Ove
   <img src="client/public/ss5.png" alt="OG Image" width="400"/>
 </p>
 
-##📽️ Video
+## 📽️ Video
 <p align="center">
   <a href="https://drive.google.com/file/d/1_1gVFLkB0h8PI54VcWyJBwPp-rksiX-3/view?usp=drive_link" target="_blank">
      <b>Click here to watch the full demo video of StackIt — Singularity</b>
